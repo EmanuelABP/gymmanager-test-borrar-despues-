@@ -1,0 +1,3 @@
+# Copiar como atlas-local.properties y completar solamente en el archivo privado.
+# Usar la URI provista por Atlas, incluyendo el nombre real de la base de datos.
+MONGODB_URI=mongodb+srv://USUARIO:CONTRASENA@HOST_DEL_CLUSTER/NOMBRE_BASE?retryWrites=true&w=majority
