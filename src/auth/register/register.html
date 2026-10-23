@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GymManager - Crear cuenta</title>
+
+  <link rel="stylesheet" href="../../style.css">
+  <link rel="stylesheet" href="./register.css">
+</head>
+<body>
+  <main class="pagina-registro">
+    <section class="tarjeta-registro" aria-labelledby="titulo-registro">
+      <h1 class="nombre-aplicacion">GymManager</h1>
+      <h2 id="titulo-registro">Crear cuenta</h2>
+
+      <form id="formulario-registro" method="post">
+        <div class="campo-formulario">
+          <label for="nombre">Nombre</label>
+          <input type="text" id="nombre" name="nombre"
+            autocomplete="given-name" placeholder="Ingresá tu nombre" required>
+        </div>
+
+        <div class="campo-formulario">
+          <label for="apellido">Apellido</label>
+          <input type="text" id="apellido" name="apellido"
+            autocomplete="family-name" placeholder="Ingresá tu apellido" required>
+        </div>
+
+        <div class="campo-formulario">
+          <label for="correo">Correo electrónico</label>
+          <input type="email" id="correo" name="correo"
+            autocomplete="email" placeholder="ejemplo@correo.com" required>
+        </div>
+
+        <div class="campo-formulario">
+          <label for="contrasena">Contraseña</label>
+          <input type="password" id="contrasena" name="contrasena"
+            autocomplete="new-password" placeholder="Creá tu contraseña" required>
+        </div>
+
+        <div class="campo-formulario">
+          <label for="confirmacion-contrasena">Confirmar contraseña</label>
+          <input type="password" id="confirmacion-contrasena"
+            name="confirmacionContrasena" autocomplete="new-password"
+            placeholder="Repetí tu contraseña" required>
+        </div>
+
+        <p id="mensaje-registro" class="mensaje-formulario" role="status"></p>
+
+        <button type="submit" class="boton-registro">Registrarse</button>
+      </form>
+
+      <p class="pie-registro">
+        ¿Ya tenés cuenta?
+        <a href="../login/login.html">Iniciá sesión</a>
+      </p>
+    </section>
+  </main>
+
+  <script type="module" src="./register.ts"></script>
+</body>
+</html>

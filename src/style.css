@@ -1,0 +1,114 @@
+:root {
+  /* Colores principales */
+  --color-principal: #087ca7;
+  --color-principal-hover: #066384;
+  --color-principal-claro: #e0f4fc;
+  --color-secundario: #ffffff;
+
+  /* Fondos */
+  --color-fondo: #fffdf5;
+  --color-superficie: #ffffff;
+
+  /* Textos y bordes */
+  --color-texto: #243746;
+  --color-texto-secundario: #5d6b76;
+  --color-borde: #ccd6de;
+
+  /* Estados */
+  --color-error: #b42318;
+  --color-exito: #187044;
+  --color-foco: #087ca7;
+
+  /* Tipografía */
+  --fuente-general: "Segoe UI", Roboto, Arial, sans-serif;
+  --fuente-titulos: "Segoe UI", Roboto, Arial, sans-serif;
+
+  --texto-pequeno: 0.875rem;
+  --texto-normal: 1rem;
+  --texto-titulo: clamp(1.75rem, 4vw, 2.5rem);
+  --texto-subtitulo: 1.25rem;
+
+  --peso-normal: 400;
+  --peso-medio: 500;
+  --peso-negrita: 700;
+
+  --interlineado-general: 1.6;
+  --interlineado-titulos: 1.2;
+
+  /* Espaciados */
+  --espacio-minimo: 0.25rem;
+  --espacio-pequeno: 0.5rem;
+  --espacio-mediano: 1rem;
+  --espacio-grande: 1.5rem;
+  --espacio-extra-grande: 2rem;
+  --espacio-maximo: 3rem;
+
+  /* Bordes y efectos */
+  --radio-pequeno: 0.375rem;
+  --radio-mediano: 0.75rem;
+  --radio-grande: 1rem;
+
+  --sombra-tarjeta: 0 8px 24px rgb(36 55 70 / 8%);
+  --transicion-rapida: 150ms ease;
+}
+
+/* Base común para todas las pantallas */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  font-family: var(--fuente-general);
+  font-size: var(--texto-normal);
+  font-weight: var(--peso-normal);
+  line-height: var(--interlineado-general);
+  color: var(--color-texto);
+  background-color: var(--color-fondo);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  font-family: var(--fuente-titulos);
+  font-weight: var(--peso-negrita);
+  line-height: var(--interlineado-titulos);
+}
+
+h1 {
+  font-size: var(--texto-titulo);
+}
+
+h2 {
+  font-size: var(--texto-subtitulo);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-foco);
+  outline-offset: 3px;
+}
