@@ -1,0 +1,23 @@
+{
+  "name": "gymmanager-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env --watch src/server.ts",
+    "check:db": "node --env-file-if-exists=.env src/check-connection.ts",
+    "check": "tsc --noEmit",
+    "build": "tsc",
+    "start": "node --env-file-if-exists=.env dist/server.js"
+  },
+  "dependencies": {
+    "mongodb": "^7.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "^7.0.2"
+  }
+}

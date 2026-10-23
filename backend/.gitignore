@@ -1,39 +1,8 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/
-
-# Credenciales privadas de MongoDB Atlas
-/atlas-local.properties
+node_modules/
+dist/
 .env
 .env.*
 !.env.example
+*.log
+# Mantener excluida cualquier configuracion privada del backend anterior.
+atlas-local.properties

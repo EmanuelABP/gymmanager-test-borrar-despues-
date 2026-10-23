@@ -7,7 +7,7 @@ Proyecto web de gestión de gimnasio desarrollado como parte del Trabajo Final I
 - El usuario crea e incorpora el código del proyecto. El asistente puede leer los archivos para responder con contexto y enviar propuestas de código por el chat.
 - El asistente no debe crear, modificar ni eliminar otros archivos del proyecto sin autorización del usuario.
 - El asistente debe actualizar este `README.md` con cada avance confirmado, manteniendo una bitácora de los pasos realizados.
-- El usuario autorizó como excepción puntual la creación del backend inicial y la configuración de conexión con MongoDB Atlas. Esta autorización no habilita cambios generales posteriores en el código.
+- El usuario autorizó como excepción puntual la creación del backend inicial, su reemplazo por Node.js/TypeScript y la configuración de conexión con MongoDB Atlas. Esta autorización no habilita cambios generales posteriores en el código.
 - Registrar únicamente pasos confirmados por el usuario o comprobados en los archivos. Las propuestas y tareas pendientes no deben figurar como completadas.
 - Leer este acuerdo antes de continuar el trabajo en futuras sesiones.
 
@@ -52,83 +52,125 @@ Se eliminaron el contador, las imágenes, los íconos y el contenido de demostra
 
 La limpieza se verificó leyendo los archivos del proyecto.
 
+### 5. Preparación y cambio de tecnología del backend
 
-### 5. Creación del backend para MongoDB Atlas
+Inicialmente se generó un backend Java con Spring Boot. Luego, el usuario decidió reemplazarlo por Node.js, siguiendo el enfoque aprendido en Base de Datos 2: usar la librería oficial `mongodb` y un `MongoClient` compartido.
 
-El usuario autorizó al asistente a crear esta parte del proyecto. Se generó la carpeta `backend` utilizando Spring Initializr, con Java 21 como versión objetivo, Maven, Spring Boot 4.1.2 y las dependencias Spring Web y Spring Data MongoDB.
+Se retiraron el código Java, Maven y los archivos generados de esa implementación inicial. El backend actual utiliza Node.js y TypeScript. El frontend Vite permanece sin cambios.
 
-La base de datos de Atlas ya fue creada por el usuario. La conexión real todavía requiere completar la configuración privada y probar el acceso.
+Se crearon:
 
-## Cómo se organiza el proyecto
+- `backend/src/db.ts`: centraliza el acceso a MongoDB y reutiliza un único cliente dentro de cada proceso.
+- `backend/src/check-connection.ts`: comprueba la conexión mediante un `ping` y luego cierra el cliente, sin insertar ni modificar datos.
+- `backend/src/server.ts`: servidor HTTP inicial, con una ruta `GET /api/salud`. Se inicia solamente si primero consigue conectarse y ejecutar un `ping` en MongoDB.
+- `backend/.env.example`: nombres de las variables necesarias, sin credenciales reales.
+- Configuración de TypeScript, comandos npm y exclusión de secretos en Git.
+
+La conexión se realiza desde el servidor Node.js. No se usa `readline-sync`: el menú de consola del ejemplo de clase se reemplazará por las pantallas de la web y las rutas de la API. Por ahora no hay operaciones de clientes, pagos ni otros módulos implementadas.
+
+## Tecnologías actuales
+
+| Parte | Tecnología |
+|---|---|
+| Frontend | HTML, CSS, TypeScript y Vite |
+| Backend | Node.js, TypeScript y servidor HTTP incorporado de Node |
+| Acceso a datos | Librería oficial `mongodb`, mediante `MongoClient` |
+| Base de datos | MongoDB Atlas, creada previamente por el usuario |
+
+Se requiere Node.js 24 o superior. En este equipo se comprobó la versión 24.15.0. Node ejecuta directamente el TypeScript usado en desarrollo; TypeScript también verifica los tipos y permite generar JavaScript para producción.
+
+## Organización actual
 
 ```text
 TF Gimmanager/
-├── src/                  TypeScript y CSS del frontend
-├── public/               Archivos públicos del frontend
-├── index.html            Entrada HTML del frontend
-├── package.json          Dependencias y comandos de Vite
-├── README.md             Esta guía y bitácora
-└── backend/              Aplicación Java con Spring Boot
-    ├── pom.xml           Dependencias del backend
-    ├── mvnw.cmd          Permite usar Maven en Windows
-    ├── .mvn/             Configuración del Maven Wrapper
-    ├── atlas-local.properties.example  Ejemplo sin credenciales reales
-    └── src/
-        ├── main/
-        │   ├── java/com/gymmanager/GymmanagerApplication.java
-        │   └── resources/application.properties
-        └── test/         Prueba inicial generada por Spring Initializr
+├── src/                   TypeScript y CSS del frontend
+├── public/                Archivos públicos del frontend
+├── index.html             HTML del frontend
+├── package.json           Dependencias y comandos de Vite
+├── README.md              Guía y bitácora
+└── backend/
+    ├── src/
+    │   ├── db.ts                  Conexión compartida a Atlas
+    │   ├── check-connection.ts    Comprobación de conexión
+    │   └── server.ts              Servidor HTTP inicial
+    ├── .env.example          Ejemplo de configuración, sin secretos
+    ├── .env                  Configuración privada que completa el usuario
+    ├── .gitignore            Excluye secretos, dependencias y compilados
+    ├── package.json          Dependencias y comandos del backend
+    ├── package-lock.json     Versiones instaladas del backend
+    └── tsconfig.json         Configuración de TypeScript del backend
 ```
 
-El frontend presenta la web en el navegador. El backend se ejecuta como un proceso separado y es el encargado de conectarse a MongoDB Atlas. Ambos pertenecen al mismo repositorio Git.
+`.env` no se incluye con valores reales: se crea copiando el ejemplo. `node_modules` y `dist` son carpetas generadas y no se versionan.
 
 ```text
-Navegador (frontend) → API Java (backend) → MongoDB Atlas
+Navegador (Vite) → API Node.js → MongoDB Atlas
 ```
 
-La dependencia de MongoDB se declara una sola vez en `backend/pom.xml`. Spring Boot administra un cliente compartido y su conjunto de conexiones. No hace falta copiar una conexión en cada módulo ni instalar el driver de MongoDB en Vite.
+Los dos `package.json` tienen responsabilidades diferentes. Los comandos del frontend se ejecutan desde la carpeta principal y los del backend desde `backend`.
 
-## Cómo completar la conexión con Atlas
+## Completar la conexión con Atlas
 
-1. Abrir una terminal dentro de `backend`:
+1. Abrir una terminal en el backend:
 
    ```powershell
    cd "C:\Users\Emanu\OneDrive\Desktop\TF Gimmanager\backend"
    ```
 
-2. Crear la configuración privada a partir del ejemplo (hacerlo una sola vez y no sobrescribir un archivo privado ya completado):
+2. Crear el archivo privado una sola vez, sin sobrescribirlo si ya está completado:
 
    ```powershell
-   Copy-Item atlas-local.properties.example atlas-local.properties
+   Copy-Item .env.example .env
    ```
 
-3. En Atlas, abrir el cluster y seleccionar **Connect → Drivers → Java**. Copiar su cadena de conexión y completar los datos del usuario de base de datos, su contraseña y el nombre real de la base de datos. El usuario de base de datos puede ser distinto del usuario con el que se inicia sesión en la web de Atlas.
+   El comando anterior corresponde a PowerShell. Si se utiliza Git Bash (MINGW64), usar en su lugar:
 
-4. Abrir `backend/atlas-local.properties` y reemplazar el valor de ejemplo de `MONGODB_URI` por la cadena completa. Mantener las opciones que proporcione Atlas. Si el usuario o contraseña contienen caracteres especiales, aplicar la codificación de URL correspondiente a esos componentes. No publicar esta cadena ni agregarla al README.
+   ```bash
+   cp .env.example .env
+   ```
 
-5. Verificar en Atlas que la IP del equipo esté permitida en **Network Access** y que el usuario de base de datos tenga permisos sobre la base elegida.
+   Si `.env` ya está configurado y la conexión funciona, no volver a copiar el ejemplo porque sobrescribiría los valores.
 
-El archivo `atlas-local.properties` está excluido mediante `backend/.gitignore`. No se ubica dentro de `src/main/resources`, para que no se incluya como recurso en el archivo compilado del backend. El ejemplo sí se puede versionar porque no contiene credenciales reales.
+3. En Atlas, abrir el cluster y seleccionar **Connect → Drivers → Node.js**. Copiar la cadena provista por Atlas.
 
-`backend/src/main/resources/application.properties` importa el archivo privado y utiliza `${MONGODB_URI}` para configurar la conexión. En un servidor también se puede definir `MONGODB_URI` como variable de entorno, sin crear ese archivo privado.
+4. Abrir `backend/.env` y completar:
 
-No colocar la URI de Atlas ni la contraseña en el TypeScript del frontend o en variables con prefijo `VITE_`, porque su contenido se puede exponer en el navegador.
+   ```dotenv
+   MONGODB_URI="mongodb+srv://USUARIO:CONTRASENA@HOST_DEL_CLUSTER/?retryWrites=true&w=majority"
+   MONGODB_DB="NOMBRE_REAL_DE_LA_BASE"
+   PORT=3000
+   ```
 
-## Cómo ejecutar el proyecto
+   Los valores de este bloque son marcadores, no credenciales reales. Usar la URI del propio cluster, mantener sus opciones y completar el nombre exacto de la base ya existente. La cuenta de base de datos puede ser distinta de la cuenta usada para iniciar sesión en la página de Atlas. Codificar como componentes de URL el usuario y contraseña si contienen caracteres especiales.
 
-### Requisito del backend
+5. Confirmar que la IP del equipo está permitida en **Network Access** y que el usuario de base de datos tiene los permisos necesarios.
 
-Instalar un JDK compatible con Java 21 o superior y configurar `JAVA_HOME` apuntando a la carpeta del JDK. No hace falta instalar Maven por separado: se incluye Maven Wrapper. En el primer uso, necesita acceso a Internet para descargar Maven y las dependencias.
+6. Probar desde `backend`:
+
+   ```powershell
+   npm run check:db
+   ```
+
+   Si la conexión y el ping resultan exitosos, aparece el mensaje `Conexion y ping a MongoDB Atlas exitosos.`. Este comando no crea ni modifica registros.
+
+El archivo `.env` está excluido de Git. La contraseña y la URI nunca deben colocarse en el código del frontend, variables `VITE_*`, capturas, README ni commits. En el servidor de publicación se pueden configurar estas mismas variables de entorno sin subir un archivo `.env`.
+
+Los comandos cargan `.env` al iniciar; después de cambiarlo hay que reiniciar el proceso. Los errores de conexión se muestran sin imprimir la URI ni el error completo del driver.
+
+## Ejecutar la web y el backend
 
 ### Backend
 
-Desde la carpeta `backend`, con la configuración de Atlas completada:
+Desde `backend`, luego de completar `.env`:
 
 ```powershell
-.\mvnw.cmd spring-boot:run
+npm install
+npm run dev
 ```
 
-La aplicación utiliza el puerto 8080 por defecto. Se debe ejecutar desde `backend` para que encuentre el archivo privado local. La estructura inicial todavía no incluye pantallas ni endpoints de clientes, ejercicios o pagos. El arranque por sí solo no demuestra una consulta exitosa a Atlas: falta verificar una operación real contra la base.
+Las dependencias ya se instalaron durante esta preparación; `npm install` sirve para reconstruirlas al clonar el proyecto. El proceso se reinicia cuando cambia el código del backend. Después de verificar Atlas, el servidor escucha en el puerto configurado, por defecto 3000.
+
+La ruta `http://localhost:3000/api/salud` responde `{"estado":"ok"}` cuando el servidor está iniciado. Esta ruta no realiza un ping nuevo por solicitud; la verificación de MongoDB ocurre durante el arranque.
 
 ### Frontend
 
@@ -138,26 +180,68 @@ En otra terminal, desde la carpeta principal `TF Gimmanager`:
 npm run dev
 ```
 
-Vite muestra la dirección para abrir la web. El frontend todavía no realiza solicitudes al backend; esa integración se desarrollará después.
+Abrir la dirección que muestre Vite. El frontend todavía no consume el backend; la integración de solicitudes, permisos y módulos se hará en pasos posteriores.
 
-## Verificación del backend inicial
+### Verificación y compilación del backend
 
-- Se compiló y empaquetó correctamente con Maven Wrapper (`package -DskipTests`).
-- Se utilizó el JDK 25 ya instalado en el equipo, manteniendo Java 21 como versión objetivo del proyecto.
-- Se comprobó que `backend/atlas-local.properties` está excluido de Git.
-- No se ejecutó la prueba inicial ni se probó todavía una conexión real con Atlas: faltan las credenciales privadas.
-
-En este equipo `JAVA_HOME` no está configurado. Para ejecutar el backend desde una terminal de PowerShell, se puede configurar solamente para esa terminal antes de iniciar:
+Desde `backend`:
 
 ```powershell
-$env:JAVA_HOME = 'C:\Program Files\Java\jdk-25'
-.\mvnw.cmd spring-boot:run
+npm run check
+npm run build
 ```
 
-La compilación de verificación guardó las descargas de Maven dentro de `backend/target/.maven`, excluido de Git. Para reutilizarlas en esta misma carpeta y evitar descargarlas nuevamente, se puede ejecutar desde `backend`:
+Para ejecutar la versión compilada, después de generar `dist`:
 
 ```powershell
-$env:JAVA_HOME = 'C:\Program Files\Java\jdk-25'
-$env:MAVEN_USER_HOME = Join-Path (Get-Location) 'target\.maven'
-.\mvnw.cmd '-Dmaven.repo.local=target/.maven/repository' spring-boot:run
+npm start
 ```
+
+## Reutilizar la conexión en futuros módulos
+
+Dentro de archivos del backend se puede importar la función compartida:
+
+```typescript
+import { conectarDB } from './db.ts'
+
+const db = await conectarDB()
+const clientesCollection = db.collection('clientes')
+```
+
+Esto es un ejemplo de uso, todavía no una operación implementada de gestión de clientes. Las llamadas concurrentes reutilizan la misma inicialización y el mismo cliente. El cliente permanece abierto mientras el servidor funciona y se cierra al detenerlo; no se crea ni se cierra en cada consulta.
+
+## Pendiente: actualizar los documentos del TP
+
+**Modificar los Markdown del TP para reemplazar Java/Spring Boot por Node.js y TypeScript en la descripción del backend.** Esta decisión fue aprobada por el usuario, pero los documentos del ZIP todavía no se modificaron.
+
+Revisar especialmente:
+
+- README principal del TP y `backend/README.md`: stack, justificación, comandos y requisitos de ejecución.
+- `ARQUITECTURA.md` y `DIAGRAMA_DE_DESPLIEGUE.md`: backend Node.js y acceso mediante el driver oficial de MongoDB.
+- `DIAGRAMAS_DE_SECUENCIA.md` y las imágenes de los diagramas: sustituir referencias específicas a componentes Spring cuando corresponda.
+- `SEGURIDAD.md`: reemplazar Spring Security y sus anotaciones por el mecanismo de autenticación y autorización que se elija para Node.js.
+- `REQUERIMIENTOS_NO_FUNCIONALES.md`, matriz de trazabilidad y otras referencias a Java, Maven o Spring Data MongoDB.
+
+El cambio de tecnología no modifica por sí solo los roles, permisos, módulos ni reglas de negocio. La autenticación y autorización todavía deben implementarse; este backend inicial no las incluye.
+
+## Verificación del cambio a Node.js
+
+- `npm run check` del backend: aprobado, sin errores de tipos.
+- `npm run build` del backend: aprobado, genera JavaScript en `backend/dist`.
+- Se comprobó que tanto la prueba de conexión como el servidor terminan con error cuando faltan las variables de Atlas, sin exponer credenciales ni iniciar el servidor.
+- Se comprobó que `.env`, dependencias y compilados del backend están excluidos de Git.
+- La compilación del frontend Vite también finalizó correctamente.
+- Durante la preparación inicial no se probó una conexión real con Atlas. Posteriormente el usuario confirmó una conexión y un ping exitosos, como se registra en el avance 6. El asistente no utilizó las credenciales del ejemplo compartido en el chat.
+
+
+### 6. Conexión con MongoDB Atlas verificada por el usuario
+
+El usuario ejecutó `npm run check:db` desde `backend` en Git Bash y obtuvo:
+
+```text
+Conexion y ping a MongoDB Atlas exitosos.
+```
+
+Esto confirma que, en esa ejecución, el cliente pudo conectarse y ejecutar un ping con la configuración disponible. No demuestra todavía operaciones CRUD ni permisos de escritura. El script de comprobación cierra el cliente al terminar.
+
+El comando `Copy-Item` indicado inicialmente es de PowerShell y no funciona en Git Bash. Su equivalente en Git Bash es `cp .env.example .env`. Si la configuración ya funciona, no se debe sobrescribir el archivo `.env` con el ejemplo.
