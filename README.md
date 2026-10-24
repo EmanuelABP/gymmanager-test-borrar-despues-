@@ -366,3 +366,29 @@ Se verificó que el usuario creó `src/auth/login/login.html`, `login.css` y el 
 A pedido del usuario, se entrega por el chat el TypeScript del login con validaciones en español, indicadores por campo y una solicitud prevista a `POST /api/usuarios/login`. El usuario lo incorporará antes de trabajar sobre el backend. No se considera implementado ni probado todavía el acceso real.
 
 El backend deberá verificar la contraseña con bcrypt, comprobar que la cuenta esté activa y establecer una sesión mediante una cookie HttpOnly. El frontend no guardará contraseñas ni simulará autenticación en localStorage. La comprobación de una sesión existente y la redirección se completarán junto con el backend; no redirigir a la raíz mientras main.ts todavía envíe al registro.
+
+### 20. Preparación del controlador de login
+
+Se verificó que el usuario creó `backend/src/controladores/login.ts` y pegó el TypeScript del login en el frontend. También renombró el controlador de registro a `backend/src/controladores/register.ts` y actualizó su importación en server.ts; la URL del registro sigue siendo `/api/usuarios/registro`.
+
+Se propone por el chat el controlador para `POST /api/usuarios/login`, con verificación mediante bcrypt, rechazo genérico de credenciales incorrectas o cuentas inactivas y creación de una sesión de ocho horas. La sesión se identificará mediante una cookie HttpOnly; MongoDB guardará solo el hash del token aleatorio en una colección técnica adicional `sesiones`, con vencimiento e índice TTL. La implementación y prueba real del login siguen pendientes de que el usuario incorpore el código.
+
+Actualizar los documentos del TP para reflejar el mecanismo de sesión finalmente adoptado y la colección técnica adicional; los documentos originales describían JWT. La validación de sesiones deberá comprobar explícitamente el vencimiento y el estado actual del usuario: la eliminación por TTL no es inmediata. Falta crear la consulta de sesión, el cierre de sesión y la redirección a la página principal.
+
+### 21. Login probado y revisión de las pantallas por rol
+
+El usuario confirmó desde la web que las credenciales incorrectas muestran el error esperado y que una cuenta creada mediante el registro obtiene el mensaje de inicio de sesión correcto. Se verificó en los archivos la incorporación del controlador de login y su ruta. La restauración y validación de sesión, el cierre de sesión y la redirección por rol todavía no están implementados.
+
+Se volvieron a leer del ZIP los documentos MODULOS, REQUERIMIENTOS_FUNCIONALES, SEGURIDAD y MOCKUPS. El perfil del cliente incluye rutina vigente, turno asignado e historia clínica propia opcional. El dashboard de indicadores generales corresponde al administrador. El entrenador trabaja con rutinas, catálogo, turnos e historia clínica según sus permisos; los documentos no definen un diseño de inicio exclusivo para él. Siguen pendientes de unificación los permisos de edición del catálogo y registro de pagos del entrenador.
+
+Como propuesta de navegación, el cliente tendría su perfil y el personal (ADMIN/ENTRENADOR) compartiría la estructura visual de un panel, con menú y funciones según rol. Esto todavía no se considera una implementación ni una política adicional aprobada. Los permisos deben verificarse en el backend, además de adaptar la interfaz.
+
+El registro actual crea una cuenta en usuarios, no una ficha en clientes, y no inicia sesión automáticamente. Los documentos dejan pendiente el flujo exacto del alta y vinculación. La futura pantalla debe contemplar una cuenta sin clienteId y no presentar rutinas o turnos ficticios ni considerar la antigüedad de la cuenta como fecha de alta del cliente. La vinculación debe realizarse de forma verificada, conservando la relación uno a uno.
+
+Siguiente secuencia propuesta: consulta y validación de sesión + cierre de sesión; pantalla del cliente con estados vacíos; navegación por rol hacia destinos existentes. Si se quiere entrar al perfil inmediatamente después del registro, habrá que agregar explícitamente el inicio de sesión automático: no ocurre con el código actual.
+
+### 22. Propuesta de consulta y cierre de sesión
+
+Se revisó la implementación actual: el login guarda tokenHash y fechaVencimiento en sesiones, establece la cookie gymmanager_sesion y todavía no tiene rutas de consulta ni cierre.
+
+Se entrega por el chat la propuesta de `backend/src/controladores/sesion.ts`, con un helper reutilizable para recuperar al usuario autenticado, consulta GET de sesión y cierre POST. La consulta deberá comprobar token, vencimiento, usuario activo y rol válido, devolviendo únicamente datos básicos. El cierre eliminará solo la sesión actual y expirará la cookie; se enviará como JSON para evitar solicitudes de formulario convencionales. No se modificaron los archivos del backend ni se ejecutaron cierres reales. Las rutas siguen pendientes hasta que el usuario incorpore el código.

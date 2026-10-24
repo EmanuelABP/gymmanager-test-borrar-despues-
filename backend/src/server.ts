@@ -1,6 +1,7 @@
 import { createServer } from 'node:http'
 import { conectarDB, cerrarDB } from './db.ts'
 import { registrarUsuario } from './controladores/register.ts'
+import { iniciarSesion } from './controladores/login.ts'
 
 const server = createServer((request, response) => {
   response.setHeader('Content-Type', 'application/json; charset=utf-8')
@@ -16,6 +17,14 @@ const server = createServer((request, response) => {
   if (request.method === 'GET' && request.url === '/api/salud') {
     response.writeHead(200)
     response.end(JSON.stringify({ estado: 'ok' }))
+    return
+  }
+  // Recibe las credenciales del formulario de login.
+  if (
+    request.method === 'POST' &&
+    request.url === '/api/usuarios/login'
+  ) {
+    void iniciarSesion(request, response)
     return
   }
 
