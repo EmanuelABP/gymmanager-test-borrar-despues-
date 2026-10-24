@@ -1,4 +1,4 @@
-import { obtenerSesion } from '../../compartidos/sesion.ts'
+import { obtenerSesion, redirigirSegunRol } from '../../compartidos/sesion.ts'
 // 1. Obtenemos los elementos del HTML.
 const formulario = document.querySelector<HTMLFormElement>(
   '#formulario-login'
@@ -186,11 +186,7 @@ formulario.addEventListener('submit', async (evento) => {
     return
     }
 
-    if (usuario.rol === 'USUARIO') {
-    window.location.replace('/src/cliente/perfil/perfil.html')
-    }
-
-// Agregaremos los destinos de ADMIN y ENTRENADOR cuando existan.
+    redirigirSegunRol(usuario)
   } catch {
     mensaje.dataset.estado = 'error'
     mensaje.textContent =

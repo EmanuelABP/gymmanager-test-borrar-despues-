@@ -103,3 +103,12 @@ export async function cerrarSesion(): Promise<void> {
 
   window.location.replace(rutaLogin)
 }
+
+// Elegimos el destino a partir del rol verificado por el backend.
+export function redirigirSegunRol(usuario: UsuarioSesion): void {
+  const destino = usuario.rol === 'USUARIO'
+    ? '/src/cliente/perfil/perfil.html'
+    : '/src/panel/inicio/inicio.html'
+
+  window.location.replace(destino)
+}

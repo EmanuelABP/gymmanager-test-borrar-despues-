@@ -15,8 +15,7 @@ Proyecto web de gestión de gimnasio desarrollado como parte del Trabajo Final I
 ## Pendientes de navegación por rol
 
 - [ ] Al abrir login o registro, consultar la sesión en el backend. Si está vigente, redirigir según el rol: USUARIO al perfil de cliente, ADMIN al panel administrativo y ENTRENADOR a su inicio dentro del panel de personal con los permisos correspondientes.
-- [ ] Aplicar la misma elección de destino después de un login exitoso y desde la entrada principal de la web.
-- [ ] Definir y crear los destinos antes de activar sus redirecciones. Usar una función compartida para evitar repetir la selección de rutas.
+- [ ] Aplicar desde la entrada principal de la web la función compartida de redirección por rol. La redirección después de un login exitoso ya está incorporada.
 - [ ] Probar sesión ausente, vigente y vencida; comprobar que no haya bucles y que un fallo de red no se trate como sesión cerrada.
 
 Cuando estas tareas estén implementadas y verificadas, quitar este bloque de pendientes y registrar el resultado en la bitácora. El registro todavía no inicia sesión automáticamente; ese cambio es una decisión aparte.
@@ -461,16 +460,31 @@ Decisión vigente:
 
 La propuesta del avance 27 no se adopta para el MVP. El alta automática de fichas, la admisión de interesados y las solicitudes o reservas de turnos por el cliente quedan como posibles mejoras futuras, sin compromiso de implementación para esta entrega. No se requieren cambios en el registro actual por esta decisión.
 
-### 29. CSS del perfil incorporado y preparación de una ficha de prueba
+### 29. Perfil incorporado y siguiente módulo
 
 Se verificó que el usuario incorporó `perfil.css` y el TypeScript de comprobación de sesión, datos básicos y cierre de sesión del perfil.
 
-El usuario propone crear manualmente un cliente en MongoDB y vincularlo a una cuenta existente para probar el flujo mientras no existe la administración. La vinculación requiere referencias ObjectId en ambos sentidos: usuarios.clienteId apunta a clientes._id y clientes.usuarioId apunta a usuarios._id. Antes de crear una ficha, comprobar que la cuenta no esté vinculada y que no exista ya una ficha correspondiente, para evitar duplicados y conservar historiales.
+El siguiente módulo propuesto es el panel administrativo y la gestión de clientes: crear fichas, listarlas y vincularlas de forma verificada con cuentas de usuario. La historia clínica se implementará posteriormente sobre esas fichas. Todavía no se crearon los archivos del panel.
 
-La prueba todavía no se realizó. Actualmente perfil.ts obtiene nombre y correo desde la sesión y únicamente usa clienteId para mostrar u ocultar el aviso de vinculación; todavía no consulta rutinas, turnos ni historia clínica del cliente. Asociar una ficha permitirá comprobar el vínculo, pero no cargará esos módulos automáticamente. El siguiente desarrollo para ello será un endpoint de perfil propio que compruebe sesión, rol y titularidad.
+### 30. Estructura inicial del panel creada
 
-### 30. Prueba manual postergada; siguiente módulo propuesto
+Se verificó que el usuario creó `src/panel/panel.css` y los archivos `inicio.html`, `inicio.css` e `inicio.ts` dentro de `src/panel/inicio`. Todavía están pendientes el contenido y la lógica.
 
-El usuario decidió no crear ni vincular clientes manualmente en MongoDB. La prueba se realizará desde la web cuando esté implementada la gestión administrativa. El avance 29 queda como una preparación que no se ejecutó, no como una tarea de carga manual pendiente de realizar ahora.
+Se propone por el chat el HTML inicial con menú lateral, encabezado e indicadores del administrador previstos en el MVP. Los indicadores empiezan sin valores reales y las opciones de módulos aún no implementados quedan deshabilitadas. La comprobación de sesión, la adaptación por rol y las rutas protegidas se agregarán en los siguientes pasos; el asistente no modificó los archivos del panel.
 
-Se recomienda continuar por el panel administrativo y el módulo de clientes: alta de ficha, listado, vinculación verificada con una cuenta y consulta del perfil. Después se podrá implementar la historia clínica sobre una ficha real, comprobando permisos y titularidad. No se han creado archivos del panel ni se han modificado datos de Atlas en este paso.
+### 31. Estilos del panel incorporados y propuesta de lógica inicial
+
+Se verificó que el usuario incorporó el HTML del inicio, `panel.css` y `inicio.css`. `inicio.ts` continúa vacío.
+
+Se propone por el chat completar el inicio del panel con comprobación de sesión, acceso de ADMIN y ENTRENADOR, selección de su sección inicial, ocultación de opciones solo administrativas y cierre de sesión. Las opciones de módulos siguen deshabilitadas hasta su implementación; no se consultan todavía indicadores reales.
+
+Como ya existen el perfil del cliente y el inicio del panel, se propone centralizar la redirección por rol en `src/compartidos/sesion.ts` y utilizarla después del login. Ambos roles de personal compartirán la URL del panel, con secciones distintas según el rol. La redirección al abrir login/registro o desde main.ts sigue pendiente, al igual que las pruebas de los tres roles. No se modificaron archivos de código en este paso.
+
+
+### 32. Inicio del panel y redirección incorporados
+
+Se verificó la incorporación de la lógica de inicio del panel, la función compartida redirigirSegunRol y su uso después del login. El usuario confirmó que funciona correctamente en su prueba.
+
+El cliente tiene como destino su perfil; ADMIN y ENTRENADOR comparten la dirección del panel, con secciones y opciones diferentes según el rol. El panel verifica sesión, permite cerrarla y mantiene deshabilitados los módulos aún no implementados. No se consideran ejecutadas pruebas separadas para todos los roles porque el usuario no detalló qué cuentas utilizó.
+
+Se actualizaron los pendientes activos: quedan la redirección automática al abrir login/registro, la entrada principal y las comprobaciones completas de los estados de sesión. El siguiente módulo propuesto es la gestión administrativa de clientes.
