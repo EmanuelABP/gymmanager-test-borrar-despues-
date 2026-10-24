@@ -1,9 +1,17 @@
 import { createServer } from 'node:http'
 import { conectarDB, cerrarDB } from './db.ts'
+import { registrarUsuario } from './controladores/registro.ts'
 
 const server = createServer((request, response) => {
   response.setHeader('Content-Type', 'application/json; charset=utf-8')
-
+    // Recibe el formulario de creación de cuentas.
+  if (
+    request.method === 'POST' &&
+    request.url === '/api/usuarios/registro'
+  ) {
+    void registrarUsuario(request, response)
+    return
+  }
   // Indica que el servidor esta iniciado. Atlas se verifica al arrancar.
   if (request.method === 'GET' && request.url === '/api/salud') {
     response.writeHead(200)

@@ -1,0 +1,149 @@
+/* Contenedor de la pantalla */
+.pagina-auth {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--espacio-extra-grande) var(--espacio-mediano);
+  background-color: var(--color-fondo);
+}
+
+/* Tarjeta del formulario */
+.tarjeta-auth {
+  width: 100%;
+  max-width: 440px;
+  min-width: 0;
+  padding: var(--espacio-extra-grande);
+  background-color: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-grande);
+  box-shadow: var(--sombra-tarjeta);
+}
+
+.nombre-aplicacion {
+  margin-bottom: var(--espacio-pequeno);
+  color: var(--color-principal);
+  text-align: center;
+}
+
+.titulo-auth {
+  margin-bottom: var(--espacio-extra-grande);
+  color: var(--color-texto-secundario);
+  font-weight: var(--peso-medio);
+  text-align: center;
+}
+
+/* Campos */
+.formulario-auth {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-grande);
+}
+
+.campo-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-pequeno);
+}
+
+.campo-formulario label {
+  font-size: var(--texto-pequeno);
+  font-weight: var(--peso-medio);
+  color: var(--color-texto);
+}
+
+.campo-formulario input {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: var(--espacio-pequeno) var(--espacio-mediano);
+  color: var(--color-texto);
+  background-color: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-pequeno);
+  transition:
+    border-color var(--transicion-rapida),
+    background-color var(--transicion-rapida);
+}
+
+.campo-formulario input::placeholder {
+  color: var(--color-texto-secundario);
+  opacity: 1;
+}
+
+.campo-formulario input:focus {
+  border-color: var(--color-foco);
+}
+
+.campo-formulario input[aria-invalid="true"] {
+  border-color: var(--color-error);
+  outline-color: var(--color-error);
+}
+
+/* Mensajes del formulario */
+.mensaje-formulario {
+  margin: 0;
+  color: var(--color-error);
+  font-size: var(--texto-pequeno);
+  overflow-wrap: anywhere;
+}
+
+.mensaje-formulario:empty {
+  display: none;
+}
+
+/* Botón principal */
+.boton-auth {
+  width: 100%;
+  min-height: 48px;
+  padding: var(--espacio-pequeno) var(--espacio-mediano);
+  color: var(--color-secundario);
+  background-color: var(--color-principal);
+  border: 0;
+  border-radius: var(--radio-pequeno);
+  font-weight: var(--peso-negrita);
+  transition: background-color var(--transicion-rapida);
+}
+
+.boton-auth:hover:not(:disabled) {
+  background-color: var(--color-principal-hover);
+}
+
+.boton-auth:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Enlace entre las pantallas de acceso */
+.pie-auth {
+  margin: var(--espacio-grande) 0 0;
+  color: var(--color-texto-secundario);
+  font-size: var(--texto-pequeno);
+  text-align: center;
+}
+
+.pie-auth a {
+  color: var(--color-principal);
+  font-weight: var(--peso-medio);
+  text-underline-offset: 3px;
+}
+
+.pie-auth a:hover {
+  color: var(--color-principal-hover);
+}
+
+/* Ajuste para celulares */
+@media (max-width: 480px) {
+  .tarjeta-auth {
+    padding: var(--espacio-grande);
+  }
+}
+/* Mantiene el foco visible en rojo cuando el campo tiene un error. */
+.campo-formulario input[aria-invalid="true"]:focus-visible {
+  outline-color: var(--color-error);
+}
+
+.mensaje-formulario[data-estado="exito"] {
+  color: var(--color-exito);
+}

@@ -8,6 +8,7 @@ Proyecto web de gestión de gimnasio desarrollado como parte del Trabajo Final I
 - El asistente no debe crear, modificar ni eliminar otros archivos del proyecto sin autorización del usuario.
 - El asistente debe actualizar este `README.md` con cada avance confirmado, manteniendo una bitácora de los pasos realizados.
 - El usuario autorizó como excepción puntual la creación del backend inicial, su reemplazo por Node.js/TypeScript y la configuración de conexión con MongoDB Atlas. Esta autorización no habilita cambios generales posteriores en el código.
+- El usuario autorizó otra excepción puntual: mejorar los indicadores de error del registro y extraer sus estilos compartidos a `src/auth/auth.css`. El resto del trabajo sigue sujeto al acuerdo de lectura y propuestas por chat.
 - Registrar únicamente pasos confirmados por el usuario o comprobados en los archivos. Las propuestas y tareas pendientes no deben figurar como completadas.
 - Leer este acuerdo antes de continuar el trabajo en futuras sesiones.
 
@@ -313,3 +314,47 @@ Se verificó que el usuario agregó la validación básica del formato de correo
 El usuario pidió una versión completa y comentada del TypeScript. Se propone consolidar las validaciones actuales, mensajes específicos por campo y, como regla inicial pendiente de incorporar y acordar con el backend, un mínimo de ocho caracteres para la contraseña. No marcar el registro como exitoso antes de que el servidor confirme la creación real.
 
 La comprobación de sesión se centralizará más adelante en un módulo compartido, cuando se implemente la autenticación. No depende de tener diseñada la página principal, pero necesita una sesión verificable por el backend y un destino de navegación definido. No considerar que un usuario está autenticado solamente porque existe un valor en localStorage.
+
+### 15. Preparación de la integración del registro con el backend
+
+Se verificó que el usuario incorporó la versión comentada de `register.ts`, con mensajes específicos y un mínimo de ocho caracteres para la contraseña.
+
+Se propone por el chat conectar el formulario con `POST /api/usuarios/registro`, crear el controlador correspondiente en el backend, usar `bcryptjs` para generar `passwordHash` y utilizar el proxy de desarrollo de Vite para enviar las solicitudes al servidor Node.js. El registro asignará `USUARIO`, `activo: true` y fechas BSON, sin incluir `clienteId` hasta que exista la vinculación.
+
+La biblioteca adicional, el controlador, la ruta, el proxy y el envío del formulario todavía no se consideran instalados ni implementados. No se crearon cuentas de prueba ni se modificaron datos en Atlas durante esta revisión. Este registro no implica iniciar sesión automáticamente: autenticación y comprobación de sesión siguen pendientes.
+
+### 16. Integración incorporada y diagnóstico del primer intento
+
+Se verificó que el usuario incorporó el controlador `backend/src/controladores/registro.ts`, la ruta POST del servidor, la dependencia `bcryptjs`, el proxy de Vite y el envío con fetch desde el formulario. También agregó `async` al evento submit.
+
+Se ejecutaron las comprobaciones de TypeScript del frontend y del backend sin generar archivos; ambas finalizaron sin errores.
+
+El usuario informó que el backend conecta a Atlas y escucha en el puerto 3000, pero no encontró el usuario tras intentar registrarse. La base configurada para esta ejecución es `gym_manager` y la colección usada por el controlador es `usuarios`. Todavía falta confirmar el mensaje o respuesta HTTP del formulario y verificar la inserción; el arranque del servidor no demuestra por sí solo que se haya creado una cuenta. El asistente no insertó usuarios ni modificó datos de Atlas.
+
+### 17. Registro confirmado y criterio de zona horaria
+
+El usuario confirmó el mensaje de creación exitosa y luego encontró los documentos en Compass al actualizar la vista. Queda comprobado por la prueba del usuario que el registro guarda cuentas en `gym_manager.usuarios`, con hash de contraseña, rol USUARIO, estado activo y fechas BSON. El asistente no creó estos documentos.
+
+Compass muestra en la captura las fechas en UTC (+00:00). Por ejemplo, `2026-10-24T01:12:15.876Z` corresponde al 23 de octubre de 2026 a las 22:12:15.876 en Buenos Aires (UTC-3): representa el mismo instante.
+
+Mantener `new Date()` y el almacenamiento como BSON Date. Al mostrar fechaCreacion o fechaModificacion en la web, formatear en español argentino y con zona `America/Argentina/Buenos_Aires`, por ejemplo mediante Intl.DateTimeFormat. No restar tres horas al valor antes de guardarlo ni convertirlo a texto local en la base. La función compartida de formato se implementará cuando haya una pantalla que muestre esas fechas.
+
+
+### 18. Errores por campo y estilos compartidos de autenticación
+
+El usuario confirmó que el intento de registrar un correo existente devuelve el mensaje esperado. Luego autorizó modificar directamente los detalles visuales y crear `auth.css`.
+
+Se trasladaron los estilos comunes a `src/auth/auth.css`, con clases reutilizables para la página, tarjeta, título, formulario, botón y pie. `register.html` carga primero `style.css`, luego `auth.css` y por último `register.css`. Este último queda reservado para ajustes exclusivos del registro, sin duplicar los estilos compartidos.
+
+En `register.ts` se incorporaron:
+
+- Marcado de todos los campos incorrectos mediante `aria-invalid`, con borde y foco rojos.
+- Un único mensaje para campos vacíos, sin repetirlo por cada casilla.
+- Mensajes específicos para correo inválido, límites de longitud y contraseñas diferentes.
+- Foco en el primer campo incorrecto al intentar enviar.
+- Revalidación mientras se corrigen los datos, después del primer intento.
+- Marcado del correo cuando el backend responde 409 por duplicado. Los errores generales del servidor no se atribuyen a un campo.
+- Asociación accesible entre los campos incorrectos y el mensaje mediante `aria-describedby`.
+- Estilo de éxito separado del error; bloqueo temporal de edición mientras se procesa el envío para mantener consistente la respuesta con los datos enviados.
+
+Verificación: TypeScript del frontend sin errores; comprobación en el navegador de campos vacíos, correo inválido, contraseñas diferentes y retiro del borde rojo al corregir. Se comprobaron localmente, con respuestas simuladas, el correo duplicado y el error general del servidor. No se hicieron registros reales ni cambios en Atlas durante estas pruebas. El login todavía no se creó.

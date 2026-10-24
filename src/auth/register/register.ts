@@ -1,89 +1,167 @@
 // 1. Obtenemos los elementos del HTML.
-const formulario = document.querySelector<HTMLFormElement>(
-  '#formulario-registro'
-)
+const formulario = document.querySelector<HTMLFormElement>('#formulario-registro')
+const mensaje = document.querySelector<HTMLParagraphElement>('#mensaje-registro')
 
-const mensaje = document.querySelector<HTMLParagraphElement>(
-  '#mensaje-registro'
-)
-
-// Si falta algún elemento, detenemos la ejecución.
 if (!formulario || !mensaje) {
   throw new Error('No se encontraron los elementos del registro.')
 }
 
-// 2. Definimos las reglas que vamos a utilizar.
+function obtenerCampo(id: string): HTMLInputElement {
+  const campo = document.querySelector<HTMLInputElement>(`#${id}`)
+  if (!campo) throw new Error(`No se encontró el campo ${id}.`)
+  return campo
+}
+
+const campos = {
+  nombre: obtenerCampo('nombre'),
+  apellido: obtenerCampo('apellido'),
+  correo: obtenerCampo('correo'),
+  contrasena: obtenerCampo('contrasena'),
+  confirmacion: obtenerCampo('confirmacion-contrasena'),
+}
+
+type NombreCampo = keyof typeof campos
+const nombresCampos = Object.keys(campos) as NombreCampo[]
 const formatoCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const longitudMinimaContrasena = 8
 
-// 3. Escuchamos el envío, tanto por el botón como por la tecla Enter.
-formulario.addEventListener('submit', (evento) => {
-  // Evitamos el envío automático y la recarga de la página.
+let enviando = false
+let validacionIniciada = false
+// Recordamos el correo rechazado por el servidor hasta que se cambie.
+let correoDuplicado: string | undefined
+
+// 2. Las reglas coinciden con las del backend.
+function obtenerError(nombreCampo: NombreCampo): string | null {
+  const valor = campos[nombreCampo].value
+
+  if (!valor.trim()) return 'Completá los campos marcados.'
+
+  switch (nombreCampo) {
+    case 'nombre':
+      return valor.trim().length > 100
+        ? 'El nombre admite hasta 100 caracteres.' : null
+    case 'apellido':
+      return valor.trim().length > 100
+        ? 'El apellido admite hasta 100 caracteres.' : null
+    case 'correo': {
+      const correo = valor.trim().toLowerCase()
+      if (correo.length > 254 || !formatoCorreo.test(correo)) {
+        return 'Ingresá un correo válido, por ejemplo: nombre@correo.com.'
+      }
+      return correo === correoDuplicado ? 'Ese correo ya está registrado.' : null
+    }
+    case 'contrasena':
+      if (valor.length < longitudMinimaContrasena) {
+        return `La contraseña debe tener al menos ${longitudMinimaContrasena} caracteres.`
+      }
+      // bcrypt admite hasta 72 bytes; algunos caracteres ocupan más de uno.
+      if (new TextEncoder().encode(valor).length > 72) {
+        return 'La contraseña es demasiado extensa: admite hasta 72 bytes.'
+      }
+      return null
+    case 'confirmacion':
+      return valor !== campos.contrasena.value
+        ? 'Las contraseñas no coinciden.' : null
+  }
+}
+
+// 3. Marcamos todos los campos incorrectos y enfocamos el primero al enviar.
+// aria-invalid y aria-describedby permiten identificar el error con lectores de pantalla.
+function validarFormulario(enfocar: boolean): boolean {
+  const errores: string[] = []
+  let primerCampoIncorrecto: HTMLInputElement | undefined
+
+  for (const nombreCampo of nombresCampos) {
+    const campo = campos[nombreCampo]
+    const error = obtenerError(nombreCampo)
+
+    if (error) {
+      campo.setAttribute('aria-invalid', 'true')
+      campo.setAttribute('aria-describedby', 'mensaje-registro')
+      errores.push(error)
+      primerCampoIncorrecto ??= campo
+    } else {
+      campo.removeAttribute('aria-invalid')
+      campo.removeAttribute('aria-describedby')
+    }
+  }
+
+  // Si hay varios campos vacíos, el mensaje se muestra una sola vez.
+  mensaje!.dataset.estado = 'error'
+  mensaje!.textContent = [...new Set(errores)].join(' ')
+
+  if (enfocar) primerCampoIncorrecto?.focus()
+  return errores.length === 0
+}
+
+// Revalidamos mientras se corrige el formulario, después del primer intento.
+// También se vuelve a comprobar la confirmación si cambia la contraseña.
+formulario.addEventListener('input', () => {
+  if (validacionIniciada && !enviando) validarFormulario(false)
+})
+
+// 4. Enviamos únicamente si los datos son válidos.
+formulario.addEventListener('submit', async (evento) => {
   evento.preventDefault()
+  if (enviando) return
 
-  // Borramos el mensaje de la validación anterior.
-  mensaje.textContent = ''
+  validacionIniciada = true
+  if (!validarFormulario(true)) return
 
-  // 4. Leemos los valores mediante los atributos "name" del HTML.
-  const datos = new FormData(formulario)
+  const boton = formulario.querySelector<HTMLButtonElement>('button[type="submit"]')
+  const correoEnviado = campos.correo.value.trim().toLowerCase()
 
-  const nombre = String(datos.get('nombre') ?? '').trim()
-  const apellido = String(datos.get('apellido') ?? '').trim()
-  const correo = String(datos.get('correo') ?? '').trim()
+  enviando = true
+  if (boton) boton.disabled = true
+  // Evitamos que cambien los datos mientras esperamos la respuesta de este envío.
+  for (const nombreCampo of nombresCampos) campos[nombreCampo].readOnly = true
 
-  // Conservamos las contraseñas exactamente como se escribieron.
-  const contrasena = String(datos.get('contrasena') ?? '')
-  const confirmacion = String(
-    datos.get('confirmacionContrasena') ?? ''
-  )
+  try {
+    const respuesta = await fetch('/api/usuarios/registro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre: campos.nombre.value.trim(),
+        apellido: campos.apellido.value.trim(),
+        email: correoEnviado,
+        contrasena: campos.contrasena.value,
+      }),
+    })
 
-  // 5. Validamos los datos personales.
-  // Cada return detiene este intento de registro.
-  if (!nombre) {
-    mensaje.textContent = 'Ingresá tu nombre.'
-    return
+    const resultado: unknown = await respuesta.json()
+    const textoRespuesta =
+      resultado !== null &&
+      typeof resultado === 'object' &&
+      'mensaje' in resultado &&
+      typeof resultado.mensaje === 'string'
+        ? resultado.mensaje
+        : 'No pudimos completar el registro.'
+
+    if (!respuesta.ok) {
+      // Esta ruta devuelve 409 cuando ya existe el correo.
+      if (respuesta.status === 409) {
+        correoDuplicado = correoEnviado
+        validarFormulario(true)
+      } else {
+        // Un problema general del servidor no se atribuye a un campo concreto.
+        mensaje.dataset.estado = 'error'
+        mensaje.textContent = textoRespuesta
+      }
+      return
+    }
+
+    // 5. Limpiamos el formulario solamente cuando el backend confirma la creación.
+    formulario.reset()
+    correoDuplicado = undefined
+    validacionIniciada = false
+    mensaje.dataset.estado = 'exito'
+    mensaje.textContent = textoRespuesta
+  } catch {
+    mensaje.dataset.estado = 'error'
+    mensaje.textContent = 'No pudimos comunicarnos con el servidor. Intentá nuevamente.'
+  } finally {
+    enviando = false
+    if (boton) boton.disabled = false
+    for (const nombreCampo of nombresCampos) campos[nombreCampo].readOnly = false
   }
-
-  if (!apellido) {
-    mensaje.textContent = 'Ingresá tu apellido.'
-    return
-  }
-
-  if (!correo) {
-    mensaje.textContent = 'Ingresá tu correo electrónico.'
-    return
-  }
-
-  if (!formatoCorreo.test(correo)) {
-    mensaje.textContent =
-      'Ingresá un correo válido, por ejemplo: nombre@correo.com.'
-    return
-  }
-
-  // 6. Validamos la contraseña.
-  // trim() solo comprueba que no esté formada únicamente por espacios.
-  if (!contrasena.trim()) {
-    mensaje.textContent = 'Ingresá una contraseña.'
-    return
-  }
-
-  if (contrasena.length < longitudMinimaContrasena) {
-    mensaje.textContent =
-      `La contraseña debe tener al menos ${longitudMinimaContrasena} caracteres.`
-    return
-  }
-
-  if (!confirmacion.trim()) {
-    mensaje.textContent = 'Repetí tu contraseña para confirmarla.'
-    return
-  }
-
-  if (contrasena !== confirmacion) {
-    mensaje.textContent = 'Las contraseñas no coinciden.'
-    return
-  }
-
-  // 7. Si llegamos acá, las validaciones anteriores pasaron.
-  // El envío al backend se agregará en el siguiente paso.
-  // La confirmación de contraseña no se enviará ni se guardará.
 })
