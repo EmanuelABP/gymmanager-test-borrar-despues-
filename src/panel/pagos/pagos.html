@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#087ca7">
+    <title>GymManager · Pagos</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../panel.css">
+    <link rel="stylesheet" href="../modulos.css">
+    <link rel="stylesheet" href="./pagos.css">
+  </head>
+  <body>
+    <div id="vista" hidden><section class="tarjeta"><h2>Cuotas a cobrar</h2><p class="ayuda">Esta lista se calcula automáticamente para las fichas activas del gimnasio. Las cuentas que solo se registraron en la web todavía no cuentan como inscriptas. El importe se define al registrar el cobro.</p><div id="pendientes-cobro"></div></section>
+      <section class="tarjeta">
+        <h2>Registrar cobro o renovar cuota</h2>
+        <form id="formulario-pago" class="formulario" novalidate>
+          <label class="campo">Cliente activo *<select name="clienteId" id="clienteId" required>
+            </select>
+          </label>
+          <label class="campo">Tipo *<select name="tipo" id="tipo" required>
+              <option value="CUOTA">Cuota</option>
+              <option value="INSCRIPCION">Inscripción</option>
+            </select>
+          </label>
+          <label class="campo">Monto en pesos *<input name="monto" type="text" required inputmode="decimal" placeholder="15000,00" pattern="[0-9]{1,9}([.,][0-9]{1,2})?">
+          </label>
+          <input name="estado" type="hidden" value="PAGADO">
+          <label class="campo">Fecha de registro / pago *<input name="fechaPago" type="date" required>
+          </label>
+          <label class="campo">Vencimiento *<input name="fechaVencimiento" type="date" required>
+          </label>
+          <label class="campo ancho">Observaciones<textarea name="observaciones" maxlength="2000" rows="3"></textarea>
+          </label>
+          <div class="acciones">
+            <button class="boton" type="submit">Registrar pago</button>
+            <button class="boton secundario" type="reset">Limpiar</button>
+          </div>
+        </form>
+      </section>
+      <section class="tarjeta">
+        <h2>Historial de pagos</h2>
+        <div class="barra-seccion">
+          <label>Buscar cliente o DNI <input id="buscar" class="buscador" type="search">
+          </label>
+          <label>Estado <select id="estado-filtro">
+              <option value="">Todos</option>
+              <option>PAGADO</option>
+              <option>PENDIENTE</option>
+              <option>VENCIDO</option>
+            </select>
+          </label>
+          <button id="imprimir" class="boton secundario" type="button">Imprimir listado</button>
+        </div>
+        <p class="ayuda">Una cuota cobrada puede figurar vencida cuando finalizó su vigencia. Renovar crea una cuota nueva y conserva el historial.</p>
+        <div id="listado">
+        </div>
+      </section>
+    </div>
+    <script type="module" src="./pagos.ts">
+    </script>
+  </body>
+</html>

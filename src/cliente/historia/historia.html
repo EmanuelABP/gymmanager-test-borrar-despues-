@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#087ca7">
+    <title>GymManager · Historia clínica</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="/src/panel/panel.css">
+    <link rel="stylesheet" href="/src/panel/modulos.css">
+    <link rel="stylesheet" href="./historia.css">
+  </head>
+  <body>
+    <div id="vista" hidden>
+      <section class="tarjeta">
+        <h2 id="nombre-ficha">Historia clínica</h2>
+        <p id="fecha-actualizacion" class="ayuda">
+        </p>
+        <p class="ayuda">Esta información está disponible solo para vos y el personal autorizado del gimnasio. Cargarla es opcional.</p>
+        <div id="acciones-historia" class="acciones">
+        </div>
+      </section>
+      <section class="tarjeta">
+        <h2>Información de salud</h2>
+        <form id="formulario-historia" class="formulario" novalidate>
+          <label class="campo ancho">Antecedentes<textarea name="antecedentes" maxlength="4000" rows="3"></textarea>
+          </label>
+          <label class="campo ancho">Lesiones<textarea name="lesiones" maxlength="4000" rows="3"></textarea>
+          </label>
+          <label class="campo ancho">Observaciones<textarea name="observaciones" maxlength="4000" rows="3"></textarea>
+          </label>
+          <div class="acciones">
+            <button class="boton" type="submit">Guardar historia clínica</button>
+            <button class="boton secundario" type="button" id="cancelar-historia">Cancelar cambios</button>
+          </div>
+        </form>
+      </section>
+    </div>
+    <script type="module" src="./historia.ts">
+    </script>
+  </body>
+</html>

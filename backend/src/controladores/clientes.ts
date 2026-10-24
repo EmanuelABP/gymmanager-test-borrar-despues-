@@ -3,6 +3,9 @@ import type { Db } from 'mongodb'
 import { MongoServerError, ObjectId } from 'mongodb'
 import { conectarDB, ejecutarTransaccion } from '../db.ts'
 import { obtenerUsuarioSesion } from './sesion.ts'
+import { fechaArgentina } from '../compartidos/http.ts'
+import type { Turno } from '../compartidos/modelos.ts'
+import { ErrorHTTP } from '../compartidos/http.ts'
 
 // Error controlado que podemos mostrar al usuario.
 class ErrorSolicitud extends Error {
@@ -121,13 +124,16 @@ async function prepararIndices(db: Db): Promise<void> {
   )
 }
 
-export async function gestionarClientes(
+export function crearGestorClientes(dependencias = {
+  conectar: conectarDB, usuario: obtenerUsuarioSesion, transaccion: ejecutarTransaccion,
+}) {
+return async function gestionarClientes(
   solicitud: IncomingMessage,
   respuesta: ServerResponse
 ): Promise<void> {
   try {
     // 1. Comprobamos sesión y permisos en el servidor.
-    const personal = await obtenerUsuarioSesion(solicitud)
+    const personal = await dependencias.usuario(solicitud)
 
     if (!personal) {
       throw new ErrorSolicitud(401, 'Iniciá sesión para continuar.')
@@ -138,7 +144,7 @@ export async function gestionarClientes(
     }
 
     const ruta = solicitud.url?.split('?')[0]
-    const db = await conectarDB()
+    const db = await dependencias.conectar()
 
     // 2. Listado disponible para administración y entrenadores.
     if (solicitud.method === 'GET' && ruta === '/api/clientes') {
@@ -185,7 +191,7 @@ export async function gestionarClientes(
     const datos = await leerDatos(solicitud)
 
     // 3. Alta de una ficha sin cuenta asociada.
-    if (ruta === '/api/clientes') {
+    if (ruta === '/api/clientes' || ruta === '/api/clientes/editar') {
       const nombre = leerTexto(datos, 'nombre', 100, true)
       const apellido = leerTexto(datos, 'apellido', 100, true)
 
@@ -194,6 +200,17 @@ export async function gestionarClientes(
 
       const telefono = leerTexto(datos, 'telefono', 30)
       const email = leerTexto(datos, 'email', 254).toLowerCase()
+      const direccion = leerTexto(datos, 'direccion', 300)
+      const nacimiento = leerTexto(datos, 'fechaNacimiento', 10)
+      const fechaNacimiento = nacimiento ? fechaArgentina(nacimiento, 'fechaNacimiento') : undefined
+      if (fechaNacimiento && fechaNacimiento > new Date()) {
+        throw new ErrorSolicitud(400, 'La fecha de nacimiento no puede ser futura.', ['fechaNacimiento'])
+      }
+      const contactoEmergencia = {
+        nombre: leerTexto(datos, 'emergenciaNombre', 100),
+        telefono: leerTexto(datos, 'emergenciaTelefono', 30),
+        relacion: leerTexto(datos, 'emergenciaRelacion', 100),
+      }
 
       // Regla inicial para DNI argentino.
       if (!/^\d{7,8}$/.test(dni)) {
@@ -216,6 +233,21 @@ export async function gestionarClientes(
 
       const fechaActual = new Date()
 
+      if (ruta === '/api/clientes/editar') {
+        const clienteId = leerTexto(datos, 'clienteId', 24, true)
+        if (!/^[a-f0-9]{24}$/i.test(clienteId)) throw new ErrorSolicitud(400, 'Seleccioná un cliente válido.')
+        const resultado = await db.collection('clientes').updateOne(
+          { _id: new ObjectId(clienteId) },
+          {
+            $set: { nombre, apellido, dni, telefono, email, direccion, contactoEmergencia, fechaModificacion: fechaActual, ...(fechaNacimiento ? { fechaNacimiento } : {}) },
+            ...(!fechaNacimiento ? { $unset: { fechaNacimiento: '' } } : {}),
+          }
+        )
+        if (!resultado.matchedCount) throw new ErrorSolicitud(404, 'El cliente no existe.')
+        responder(respuesta, 200, { mensaje: 'Ficha actualizada correctamente.' })
+        return
+      }
+
       await db.collection('clientes').insertOne({
         nombre,
         apellido,
@@ -224,6 +256,9 @@ export async function gestionarClientes(
         fechaCreacion: fechaActual,
         fechaModificacion: fechaActual,
         rutinas: [],
+        direccion,
+        contactoEmergencia,
+        ...(fechaNacimiento ? { fechaNacimiento } : {}),
         ...(telefono ? { telefono } : {}),
         ...(email ? { email } : {}),
       })
@@ -231,6 +266,29 @@ export async function gestionarClientes(
       responder(respuesta, 201, {
         mensaje: 'Cliente creado correctamente.',
       })
+      return
+    }
+
+    if (ruta === '/api/clientes/desactivar' || ruta === '/api/clientes/reactivar') {
+      const clienteId = leerTexto(datos, 'clienteId', 24, true)
+      if (!/^[a-f0-9]{24}$/i.test(clienteId)) throw new ErrorSolicitud(400, 'Seleccioná un cliente válido.')
+      const id = new ObjectId(clienteId)
+      const activo = ruta.endsWith('/reactivar')
+      await dependencias.transaccion(async (base, transaccion) => {
+        const ahora = new Date()
+        const cambio = await base.collection('clientes').updateOne({ _id: id, activo: !activo }, activo
+          ? { $set: { activo: true, fechaModificacion: ahora }, $unset: { fechaBaja: '' } }
+          : { $set: { activo: false, fechaBaja: ahora, fechaModificacion: ahora } }, { session: transaccion })
+        if (!cambio.matchedCount) throw new ErrorSolicitud(409, 'La ficha no existe o ya tiene ese estado.')
+        if (!activo) {
+          // Liberamos los cupos y conservamos los movimientos del turno como historial.
+          await base.collection<Turno>('turnos').updateMany({ clientes: id }, {
+            $pull: { clientes: id },
+            $push: { historialClientes: { clienteId: id, accion: 'BAJA_CLIENTE', fecha: ahora, usuarioId: new ObjectId(personal.id) } },
+          }, { session: transaccion })
+        }
+      })
+      responder(respuesta, 200, { mensaje: activo ? 'Cliente reactivado. Podés volver a asignarle turnos.' : 'Cliente dado de baja. Se conservó su historial y se liberaron sus cupos.' })
       return
     }
 
@@ -266,7 +324,7 @@ export async function gestionarClientes(
 
       await prepararIndices(db)
 
-      await ejecutarTransaccion(async (base, transaccion) => {
+      await dependencias.transaccion(async (base, transaccion) => {
         const cliente = await base.collection('clientes').findOne(
           { _id: new ObjectId(clienteId), activo: true },
           {
@@ -364,6 +422,10 @@ export async function gestionarClientes(
 
     throw new ErrorSolicitud(404, 'Ruta no encontrada.')
   } catch (error) {
+    if (error instanceof ErrorHTTP) {
+      responder(respuesta, error.estado, { mensaje: error.message, campos: error.campos })
+      return
+    }
     if (error instanceof ErrorSolicitud) {
       responder(respuesta, error.estado, {
         mensaje: error.message,
@@ -389,3 +451,6 @@ export async function gestionarClientes(
     })
   }
 }
+}
+
+export const gestionarClientes = crearGestorClientes()

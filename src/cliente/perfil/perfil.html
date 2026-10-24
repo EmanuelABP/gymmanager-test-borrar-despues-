@@ -1,87 +1,51 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GymManager - Mi perfil</title>
-
-  <link rel="stylesheet" href="../../style.css">
-  <link rel="stylesheet" href="./perfil.css">
-</head>
-<body>
-  <header class="encabezado-principal">
-    <a class="marca" href="./perfil.html">GymManager</a>
-
-    <nav class="navegacion-perfil" aria-label="Opciones de la cuenta">
-      <span>Mi perfil · Cliente</span>
-      <button id="boton-cerrar-sesion" type="button" disabled>
-        Cerrar sesión
-      </button>
-    </nav>
-  </header>
-
-  <main class="pagina-perfil">
-    <p id="mensaje-perfil" class="mensaje-perfil" role="status"></p>
-
-    <section class="presentacion-cliente"
-      aria-labelledby="nombre-cliente">
-
-      <div id="iniciales-cliente" class="avatar-cliente"
-        aria-hidden="true"></div>
-
-      <div>
-        <h1 id="nombre-cliente">Mi perfil</h1>
-        <p id="correo-cliente"></p>
-      </div>
-    </section>
-
-    <p id="aviso-vinculacion" class="aviso-perfil" hidden>
-      Tu cuenta todavía no está vinculada a una ficha del gimnasio.
-      Consultá con administración para completar la vinculación.
-    </p>
-
-    <div class="contenido-perfil">
-      <section class="tarjeta-perfil tarjeta-rutina"
-        aria-labelledby="titulo-rutina">
-
-        <h2 id="titulo-rutina">Rutina vigente</h2>
-
-        <div id="contenido-rutina">
-          <p class="estado-vacio">
-            Tu rutina aparecerá acá cuando esté disponible.
-          </p>
-        </div>
-      </section>
-
-      <section class="tarjeta-perfil tarjeta-turno"
-        aria-labelledby="titulo-turno">
-
-        <h2 id="titulo-turno">Mi turno asignado</h2>
-
-        <div id="contenido-turno">
-          <p class="estado-vacio">
-            La información de tu turno aparecerá acá.
-          </p>
-        </div>
-      </section>
-
-      <section class="tarjeta-perfil tarjeta-historia"
-        aria-labelledby="titulo-historia">
-
-        <h2 id="titulo-historia">Historia clínica</h2>
-
-        <p>
-          Podés registrar antecedentes y lesiones relevantes
-          para tu entrenamiento. Completarla es opcional.
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#087ca7">
+    <title>GymManager · Mi perfil</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="/src/panel/panel.css">
+    <link rel="stylesheet" href="/src/panel/modulos.css">
+    <link rel="stylesheet" href="./perfil.css">
+  </head>
+  <body>
+    <div id="vista" hidden>
+      <section class="tarjeta">
+        <p class="sobre-titulo">MI ESPACIO</p>
+        <h2 id="nombre-cliente">
+        </h2>
+        <p id="correo-cliente" class="ayuda">
         </p>
-
-        <button id="boton-historia-clinica" type="button" disabled>
-          Ver / editar
-        </button>
+        <p id="estado-ficha">
+        </p>
       </section>
+      <div class="dos-columnas">
+        <section class="tarjeta">
+          <div class="barra-seccion">
+            <h2>Mi rutina vigente</h2>
+            <button id="imprimir" class="boton secundario" type="button" hidden>Imprimir</button>
+          </div>
+          <div id="rutina">
+          </div>
+        </section>
+        <div class="lista-detalle no-imprimir">
+          <section class="tarjeta">
+            <h2>Mis turnos</h2>
+            <div id="turnos">
+            </div>
+          </section>
+          <section class="tarjeta">
+            <h2>Historia clínica</h2>
+            <p>Antecedentes, lesiones y observaciones para acompañar tu entrenamiento. Completarla es opcional.</p>
+            <div id="acceso-historia">
+            </div>
+          </section>
+        </div>
+      </div>
     </div>
-  </main>
-
-  <script type="module" src="./perfil.ts"></script>
-</body>
+    <script type="module" src="./perfil.ts">
+    </script>
+  </body>
 </html>

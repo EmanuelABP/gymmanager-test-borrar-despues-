@@ -1,3 +1,6 @@
+import { obtenerSesion, redirigirSegunRol } from '../../compartidos/sesion.ts'
+import { comprobarEntradaPublica } from '../comprobar-sesion.ts'
+void comprobarEntradaPublica()
 // 1. Obtenemos los elementos del HTML.
 const formulario = document.querySelector<HTMLFormElement>('#formulario-registro')
 const mensaje = document.querySelector<HTMLParagraphElement>('#mensaje-registro')
@@ -150,12 +153,12 @@ formulario.addEventListener('submit', async (evento) => {
       return
     }
 
-    // 5. Limpiamos el formulario solamente cuando el backend confirma la creación.
-    formulario.reset()
-    correoDuplicado = undefined
-    validacionIniciada = false
-    mensaje.dataset.estado = 'exito'
-    mensaje.textContent = textoRespuesta
+    const usuario = await obtenerSesion()
+    if (usuario) { redirigirSegunRol(usuario); return }
+    mensaje.dataset.estado = 'error'
+    mensaje.textContent = 'La cuenta se creó, pero no pudimos confirmar la sesión. Iniciá sesión con tus datos.'
+    return
+
   } catch {
     mensaje.dataset.estado = 'error'
     mensaje.textContent = 'No pudimos comunicarnos con el servidor. Intentá nuevamente.'

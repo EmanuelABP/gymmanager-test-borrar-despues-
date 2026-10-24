@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#087ca7">
+    <title>GymManager · Turnos</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../panel.css">
+    <link rel="stylesheet" href="../modulos.css">
+    <link rel="stylesheet" href="./turnos.css">
+  </head>
+  <body>
+    <div id="vista" hidden><section class="tarjeta" id="configurar-agenda" hidden>
+<h2>Horarios del gimnasio y días de trabajo</h2>
+<p class="ayuda">Configurá las franjas de apertura y marcá los días de cada ENTRENADOR. Se generará un turno por hora y por entrenador, con un máximo de cinco clientes por turno.</p>
+<form id="formulario-agenda" class="formulario" novalidate>
+<div id="franjas-apertura" class="ancho lista-detalle"></div>
+<div class="acciones"><button id="agregar-franja" class="boton secundario" type="button">Agregar franja de apertura</button></div>
+<label class="campo">Clientes por entrenador y hora<input name="capacidad" type="number" min="1" max="5" value="5" required></label>
+<div id="dias-entrenadores" class="ancho lista-detalle"></div>
+<p class="ayuda ancho">Los turnos coincidentes conservan sus clientes. Generar no elimina otros horarios. Si hay bloques anteriores de varias horas, editá o desactivá esos bloques primero.</p>
+<div class="acciones"><button class="boton" type="submit">Guardar y generar agenda semanal</button></div>
+</form></section><details id="excepcion-turno" class="tarjeta"><summary>Crear o editar un turno individual</summary>
+      <section class="tarjeta">
+        <h2 id="titulo-turno">Crear turno semanal</h2>
+        <form id="formulario-turno" class="formulario" novalidate>
+          <input name="id" type="hidden">
+          <label class="campo">Día *<select name="dia" id="dia" required>
+              <option value="LUNES">LUNES</option>
+              <option value="MARTES">MARTES</option>
+              <option value="MIERCOLES">MIERCOLES</option>
+              <option value="JUEVES">JUEVES</option>
+              <option value="VIERNES">VIERNES</option>
+              <option value="SABADO">SABADO</option>
+              <option value="DOMINGO">DOMINGO</option>
+            </select>
+          </label>
+          <label class="campo">Entrenador responsable *<select name="entrenadorId" id="entrenadorId" required>
+            </select>
+          </label>
+          <label class="campo">Desde *<input name="horaInicio" type="time" required>
+          </label>
+          <label class="campo">Hasta *<input name="horaFin" type="time" required>
+          </label>
+          <label class="campo">Cupo máximo *<input name="capacidad" type="number" required min="1" max="5" step="1">
+          </label>
+          <label class="campo ancho">Observaciones<textarea name="observaciones" maxlength="2000" rows="3"></textarea>
+          </label>
+          <div class="acciones">
+            <button class="boton" type="submit" id="guardar-turno">Crear turno</button>
+            <button id="cancelar-turno" class="boton secundario" type="button" hidden>Cancelar edición</button>
+            <button class="boton secundario" type="reset">Limpiar</button>
+          </div>
+        </form>
+      </section></details>
+      <section class="tarjeta">
+        <h2>Asignar un cliente</h2>
+        <form id="formulario-asignacion" class="formulario" novalidate>
+          <label class="campo">Turno activo *<select name="turnoId" id="turnoId" required>
+            </select>
+          </label>
+          <label class="campo">Cliente activo *<select name="clienteId" id="clienteId" required>
+            </select>
+          </label>
+          <div class="acciones">
+            <button class="boton" type="submit">Asignar cliente</button>
+            <button class="boton secundario" type="reset">Limpiar</button>
+          </div>
+        </form>
+      </section>
+      <section class="tarjeta">
+        <h2>Horarios y ocupación</h2>
+        <div class="barra-seccion"><label>Entrenador <select id="filtro-entrenador"></select></label><label>Día <select id="filtro-dia"><option value="">Todos los días</option><option>LUNES</option><option>MARTES</option><option>MIERCOLES</option><option>JUEVES</option><option>VIERNES</option><option>SABADO</option><option>DOMINGO</option></select></label><label>Estado <select id="filtro-estado"><option value="activos">Activos</option><option value="todos">Todos</option><option value="inactivos">Inactivos</option></select></label></div><div id="listado" class="lista-detalle">
+        </div>
+      </section>
+    </div>
+    <script type="module" src="./turnos.ts">
+    </script>
+  </body>
+</html>

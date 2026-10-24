@@ -4,21 +4,31 @@ Proyecto web de gestión de gimnasio desarrollado como parte del Trabajo Final I
 
 ## Acuerdo de trabajo con el asistente
 
-- El usuario crea e incorpora el código del proyecto. El asistente puede leer los archivos para responder con contexto y enviar propuestas de código por el chat.
-- El asistente no debe crear, modificar ni eliminar otros archivos del proyecto sin autorización del usuario.
+- Autorización vigente del 24/10/2026: el usuario creó una copia y autorizó al asistente a modificar el código para completar el primer prototipo, respetando el ZIP y las decisiones de esta conversación. Esta autorización reemplaza la restricción anterior de solo lectura para este trabajo.
+- Se mantiene la separación de HTML, CSS y TypeScript, con nombres en español y componentes compartidos donde corresponde.
 - El asistente debe actualizar este `README.md` con cada avance confirmado, manteniendo una bitácora de los pasos realizados.
-- El usuario autorizó como excepción puntual la creación del backend inicial, su reemplazo por Node.js/TypeScript y la configuración de conexión con MongoDB Atlas. Esta autorización no habilita cambios generales posteriores en el código.
-- El usuario autorizó otra excepción puntual: mejorar los indicadores de error del registro y extraer sus estilos compartidos a `src/auth/auth.css`. El resto del trabajo sigue sujeto al acuerdo de lectura y propuestas por chat.
+- Las excepciones puntuales anteriores (backend y estilos de autenticación) se conservan como antecedentes; ahora rige la autorización general del prototipo.
 - Registrar únicamente pasos confirmados por el usuario o comprobados en los archivos. Las propuestas y tareas pendientes no deben figurar como completadas.
 - Leer este acuerdo antes de continuar el trabajo en futuras sesiones.
 
-## Pendientes de navegación por rol
+## Primer prototipo: uso actual
 
-- [ ] Al abrir login o registro, consultar la sesión en el backend. Si está vigente, redirigir según el rol: USUARIO al perfil de cliente, ADMIN al panel administrativo y ENTRENADOR a su inicio dentro del panel de personal con los permisos correspondientes.
-- [ ] Aplicar desde la entrada principal de la web la función compartida de redirección por rol. La redirección después de un login exitoso ya está incorporada.
-- [ ] Probar sesión ausente, vigente y vencida; comprobar que no haya bucles y que un fallo de red no se trate como sesión cerrada.
+Desde la raíz del proyecto, iniciar la web:
 
-Cuando estas tareas estén implementadas y verificadas, quitar este bloque de pendientes y registrar el resultado en la bitácora. El registro todavía no inicia sesión automáticamente; ese cambio es una decisión aparte.
+```bash
+npm run dev
+```
+
+En otra terminal, también desde la raíz:
+
+```bash
+cd backend
+npm run dev
+```
+
+Abrir la dirección que indique Vite. La entrada principal, login y registro consultan la sesión y redirigen al perfil o panel correspondiente. El registro público crea una cuenta USUARIO e inicia su sesión automáticamente; administración crea y vincula la ficha del gimnasio.
+
+La guía vigente está en [docs/PROTOTIPO.md](docs/PROTOTIPO.md): módulos, permisos, reglas, creación del primer administrador, comprobaciones y preparación para producción. Las secciones numeradas de esta bitácora conservan la historia del desarrollo y pueden describir estados anteriores.
 
 ## Tecnologías del frontend
 
@@ -522,3 +532,37 @@ Se propone por el chat reutilizar el formulario de alta en modo edición y añad
 La baja guarda activo: false, fechaBaja y fechaModificacion. La ficha permanece en el listado como inactiva y conserva su historial y vínculo con la cuenta. Esta acción no desactiva por sí misma la cuenta de usuario. El DNI sigue reservado por su índice único. Reactivación no incluida en este paso.
 
 Pendiente: incorporar el código entregado por el chat y comprobar edición, campos opcionales vacíos, DNI duplicado, baja y permisos. Todavía no se considera implementado ni probado; solo se actualizó este README.
+
+### 36. Primer prototipo completo con autorización para modificar código
+
+El usuario informó que creó una copia y autorizó completar directamente el código de la web. Se revisaron módulos, casos de uso, reglas, esquema y requisitos funcionales del ZIP. Se completaron los paneles de administración/entrenador, la gestión de clientes, catálogo, rutinas, turnos, pagos, cuentas de personal, perfil de cliente e historia clínica. La guía vigente y el recorrido de prueba están en docs/PROTOTIPO.md.
+
+Se incorporaron edición, baja lógica y reactivación de fichas; búsqueda; nacimiento/dirección/contacto de emergencia; vinculación transaccional; catálogo con bajas; rutinas con historial máximo de doce e impresión; turnos con edición, cupos y movimientos; pagos Decimal128, cobros y renovaciones; dashboard con indicadores reales, vencimientos y ocupación. Administración gestiona cuentas de personal y el estado/rol de cuentas no administradoras. Los tres roles pueden cambiar su contraseña validando la actual.
+
+Se completó la navegación pendiente: entrada, login y registro consultan sesión; páginas protegidas redirigen al destino correcto ante un rol no permitido. El backend verifica además cada permiso y la propiedad de la historia clínica. Se vuelve a comprobar la sesión al regresar con Atrás. El alta pública sigue creando solo una cuenta USUARIO, sin ficha automática ni inicio de sesión automático.
+
+Se resolvieron las diferencias entre borradores mediante reglas explícitas en la guía: catálogo modificable solo por ADMIN; pagos/cuentas solo ADMIN; clientes activos por su campo activo; ingresos por cobros efectivos del mes argentino; última cuota por vencimiento, con cobro separado de vigencia. Los MD originales deberán alinearse a estas decisiones, Node.js y la sesión mediante cookie. No se alteró el ZIP original.
+
+La especificación funcional final excluye Google, recuperación por correo y adjuntos clínicos: permanecen fuera del MVP. Se preparó un comando explícito para crear el primer administrador cuando no existe ninguno, una plantilla de configuración sin secretos y la compilación de todas las páginas para servirlas junto con la API.
+
+Verificación realizada: build del frontend y backend; 17 pruebas automatizadas sin Atlas (permisos, historia propia, fichas, DNI, bajas, cupos, rutinas, pagos, sesiones ausentes/vigentes/vencidas y cambio de contraseña). Se leyeron los validadores reales de Atlas y se ejecutó una agregación de solo lectura con documentos ficticios para confirmar los tipos y las expresiones de doce rutinas. Esas consultas no insertaron documentos ni modificaron índices.
+
+En navegador, con servidor y datos ficticios en memoria: edición de teléfono/correo, asignación de rutina, perfil con rutina y turno, guardado de historia propia, inicio de entrenador, redirecciones de entrenador hacia su inicio y de cliente hacia su perfil ante URLs no permitidas, edición de turno conservando integrantes y registro de cuota con centavos. Captura del inicio con datos ficticios: docs/capturas/prototipo-admin.png.
+
+Queda la prueba de aceptación del circuito completo con las cuentas y datos reales elegidos por el usuario; no se considera ejecutada por las pruebas aisladas. No se desplegó ni publicó el proyecto y no se creó un commit automático.
+
+### 37. Correcciones surgidas de las pruebas manuales
+
+El usuario reportó y solicitó ajustes sobre el prototipo. Se implementó sesión automática tras el registro en una transacción; cambio de contraseña con rotación de la sesión actual y cierre de las anteriores; ayuda visible de contraseña y mensajes de validación específicos. Las confirmaciones nativas se reemplazaron por un diálogo propio accesible.
+
+Cuentas permite seleccionar ADMIN, USUARIO o ENTRENADOR, incluso con una ficha vinculada; se conserva la relación uno a uno y se protege el acceso del propio administrador y la existencia de al menos uno activo. ADMIN puede habilitar esEntrenador como función adicional. El validador de usuarios mantiene rol como string. Los selectores de entrenamiento excluyen administradores sin esa función.
+
+Rutinas incorpora edición de la vigente sin agregar una nueva al historial, con control de versión. Los ejercicios se pueden cerrar en filas resumidas con Modificar/Quitar. Se separó la presentación de la vigente y las rutinas anteriores.
+
+Turnos permite configurar franjas de apertura y días por entrenador, y generar horarios de una hora en lote con cupo máximo de cinco. Una repetición conserva las asignaciones y no duplica horarios. Las transacciones se serializan para impedir superposiciones o cupos excedidos. Los bloques anteriores de varias horas se conservan y deben revisarse antes de generar franjas superpuestas. El listado se agrupa por entrenador y día, con ocupación, lugares libres y filtros.
+
+Pagos calcula Cuotas a cobrar a partir de fichas activas y cuotas existentes, sin cargar pendientes manuales ni crear pagos ficticios. Incluye los casos sin primera cuota, cuota sin cobrar y renovación pendiente. Los importes se definen al cobrar; no se inventó una tarifa. La guía docs/PROTOTIPO.md describe el comportamiento vigente.
+
+Verificación: compilación de web/backend y pruebas aisladas actualizadas; consulta de solo lectura con documentos ficticios en Atlas para comprobar también la edición de rutinas. En navegador, con datos en memoria: diálogo propio, resumen y modificación de un ejercicio, asignación y edición de rutina, generación de 16 franjas para dos días conservando la asignación existente. No se realizaron escrituras de prueba sobre los datos reales de Atlas.
+
+Resultado final del avance 37: 24 pruebas automatizadas aprobadas, build de frontend y backend correcto, y comprobación de solo lectura en Atlas aprobada. Se verificó también en navegador la aparición automática de una ficha sin cuota dentro de Cuotas a cobrar. Captura del diálogo con datos ficticios: docs/capturas/confirmacion-estilo.png. Los bloques anteriores de varias horas se mantienen para revisión del usuario; no se migraron ni movieron clientes reales.

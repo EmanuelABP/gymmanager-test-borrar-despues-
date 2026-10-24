@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#087ca7">
+    <title>GymManager · Rutinas</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../panel.css">
+    <link rel="stylesheet" href="../modulos.css">
+    <link rel="stylesheet" href="./rutinas.css">
+  </head>
+  <body>
+    <div id="vista" hidden>
+      <section class="tarjeta no-imprimir">
+        <h2>Elegir cliente</h2>
+        <label class="campo">Ficha del gimnasio<select id="clienteId" required>
+          </select>
+        </label>
+        <p id="estado-cliente" class="ayuda">
+        </p>
+      </section>
+      <section class="tarjeta" id="editor-rutina" hidden>
+        <h2 id="titulo-editor">Asignar una nueva rutina</h2>
+        <form id="formulario-rutina" class="formulario" novalidate>
+          <label class="campo">Entrenador responsable *<select name="entrenadorId" id="entrenadorId" required>
+            </select>
+          </label>
+          <p class="ayuda ancho">Series y repeticiones enteras; peso en kg y descanso en segundos. Podés modificar la rutina vigente o asignar una nueva para conservar la anterior en el historial.</p>
+          <div id="ejercicios-rutina" class="ancho lista-detalle">
+          </div>
+          <div class="acciones">
+            <button id="agregar-ejercicio" class="boton secundario" type="button">Agregar ejercicio</button>
+          </div>
+          <label class="campo ancho">Indicaciones generales<textarea name="observaciones" maxlength="2000" rows="3"></textarea>
+          </label>
+          <div class="acciones">
+            <button id="guardar-rutina" class="boton" type="submit">Asignar nueva rutina</button>
+            <button id="cancelar-edicion-rutina" class="boton secundario" type="button" hidden>Cancelar modificación</button>
+          </div>
+        </form>
+      </section>
+      <section class="tarjeta">
+        <h2>Rutina e historial</h2>
+        <div class="barra-seccion">
+          <h2 id="nombre-ficha">
+          </h2>
+          <button id="imprimir" class="boton secundario" type="button">Imprimir rutina vigente</button>
+        </div>
+        <div id="historial">
+        </div>
+      </section>
+    </div>
+    <script type="module" src="./rutinas.ts">
+    </script>
+  </body>
+</html>

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#087ca7">
+    <title>GymManager · Mi cuenta</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="/src/panel/panel.css">
+    <link rel="stylesheet" href="/src/panel/modulos.css">
+    <link rel="stylesheet" href="./cuenta.css">
+  </head>
+  <body>
+    <div id="vista" hidden>
+      <section class="tarjeta">
+        <h2>Datos de mi cuenta</h2>
+        <div id="datos-cuenta">
+        </div>
+      </section>
+      <section class="tarjeta">
+        <h2>Cambiar contraseña</h2>
+        <p class="ayuda">La nueva contraseña debe tener al menos 8 caracteres y hasta 72 bytes. Tu sesión actual continuará abierta; las demás se cerrarán.</p>
+        <form id="formulario-contrasena" class="formulario" novalidate>
+          <label class="campo">Contraseña actual *<input name="actual" type="password" required autocomplete="current-password">
+          </label>
+          <label class="campo">Nueva contraseña *<input name="contrasena" type="password" required minlength="8" autocomplete="new-password">
+          </label>
+          <label class="campo">Repetir nueva contraseña *<input name="confirmacion" type="password" required minlength="8" autocomplete="new-password">
+          </label>
+          <div class="acciones">
+            <button class="boton" type="submit">Actualizar contraseña</button>
+            <button class="boton secundario" type="reset">Limpiar</button>
+          </div>
+        </form>
+      </section>
+    </div>
+    <script type="module" src="./cuenta.ts">
+    </script>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+/* Editor compacto de ejercicios y separación visual del historial. */
+.ejercicio-compacto { border: 1px solid var(--color-borde); border-radius: var(--radio-mediano); overflow: hidden; }
+.resumen-ejercicio { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:.8rem 1rem; }
+.resumen-ejercicio strong { font-size:.9rem; }
+.resumen-ejercicio strong { min-width:0; overflow-wrap:anywhere; }
+.rutina-vigente { padding:1rem; border-left:4px solid var(--color-principal); background:var(--color-fondo); border-radius:var(--radio-pequeno); }
+.historial-rutinas { margin-top:2rem; }
+.rutina-anterior { border:1px solid var(--color-borde); border-radius:var(--radio-mediano); margin:.8rem 0; padding:1rem; }
+.rutina-anterior summary { cursor:pointer; color:var(--color-principal); font-weight:600; }
+@media(max-width:650px){.resumen-ejercicio{align-items:flex-start;flex-direction:column}}

@@ -1,4 +1,6 @@
 import { obtenerSesion, redirigirSegunRol } from '../../compartidos/sesion.ts'
+import { comprobarEntradaPublica } from '../comprobar-sesion.ts'
+void comprobarEntradaPublica()
 // 1. Obtenemos los elementos del HTML.
 const formulario = document.querySelector<HTMLFormElement>(
   '#formulario-login'

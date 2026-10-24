@@ -52,6 +52,8 @@
   --transicion-rapida: 150ms ease;
 }
 
+[hidden] { display: none !important; }
+
 /* Base común para todas las pantallas */
 *,
 *::before,

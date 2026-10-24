@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#087ca7">
+    <title>GymManager · Ejercicios</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../panel.css">
+    <link rel="stylesheet" href="../modulos.css">
+    <link rel="stylesheet" href="./ejercicios.css">
+  </head>
+  <body>
+    <div id="vista" hidden>
+      <section class="tarjeta" id="tarjeta-editor" hidden>
+        <h2>Ejercicio del catálogo</h2>
+        <form id="formulario-ejercicio" class="formulario" novalidate>
+          <input name="id" type="hidden">
+          <label class="campo">Código *<input name="codigo" type="text" required maxlength="30">
+          </label>
+          <label class="campo">Nombre *<input name="nombre" type="text" required maxlength="120">
+          </label>
+          <label class="campo">Grupo muscular *<input name="grupoMuscular" type="text" required maxlength="100">
+          </label>
+          <label class="campo ancho">Descripción<textarea name="descripcion" maxlength="2000" rows="3"></textarea>
+          </label>
+          <div class="acciones">
+            <button class="boton" type="submit">Guardar</button>
+            <button class="boton secundario" type="reset">Limpiar</button>
+          </div>
+        </form>
+      </section>
+      <section class="tarjeta">
+        <h2>Catálogo</h2>
+        <label>Buscar por código, nombre o grupo muscular <input id="buscar" class="buscador" type="search" placeholder="Buscar ejercicio…">
+        </label>
+        <p class="ayuda">Los ejercicios inactivos se conservan en las rutinas anteriores.</p>
+        <div id="listado">
+        </div>
+      </section>
+    </div>
+    <script type="module" src="./ejercicios.ts">
+    </script>
+  </body>
+</html>

@@ -49,11 +49,11 @@ function responder(
 }
 
 // Esta función también servirá para proteger futuras rutas del backend.
-export async function obtenerUsuarioSesion(solicitud: IncomingMessage) {
+export async function obtenerUsuarioSesion(solicitud: IncomingMessage, conectar = conectarDB) {
   const token = obtenerToken(solicitud)
   if (!token) return null
 
-  const db = await conectarDB()
+  const db = await conectar()
 
   // Comprobamos el vencimiento explícitamente.
   // No dependemos de que MongoDB ya haya eliminado la sesión vencida.
@@ -78,6 +78,7 @@ export async function obtenerUsuarioSesion(solicitud: IncomingMessage) {
         apellido: 1,
         email: 1,
         rol: 1,
+        esEntrenador: 1,
         clienteId: 1,
       },
     }
@@ -97,6 +98,7 @@ export async function obtenerUsuarioSesion(solicitud: IncomingMessage) {
     apellido: usuario.apellido,
     email: usuario.email,
     rol: usuario.rol,
+    esEntrenador: usuario.rol === 'ENTRENADOR' || (usuario.rol === 'ADMIN' && usuario.esEntrenador === true),
     clienteId:
       usuario.clienteId instanceof ObjectId
         ? usuario.clienteId.toHexString()

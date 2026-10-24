@@ -1,116 +1,57 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GymManager - Panel de gestión</title>
-
-  <link rel="stylesheet" href="../../style.css">
-  <link rel="stylesheet" href="../panel.css">
-  <link rel="stylesheet" href="./inicio.css">
-</head>
-<body>
-  <div class="estructura-panel">
-    <!-- Menú compartido por las pantallas de gestión. -->
-    <aside class="barra-lateral">
-      <a class="marca-panel" href="./inicio.html">GymManager</a>
-
-      <nav class="menu-panel" aria-label="Menú de gestión">
-        <a href="./inicio.html" class="opcion-menu" aria-current="page">
-          Inicio
-        </a>
-
-        <a href="../clientes/clientes.html" class="opcion-menu">
-          Clientes
-        </a>
-
-        <button class="opcion-menu" type="button" disabled>
-          Ejercicios
-        </button>
-
-        <button class="opcion-menu" type="button" disabled>
-          Rutinas
-        </button>
-
-        <button class="opcion-menu" type="button" disabled>
-          Turnos
-        </button>
-
-        <button class="opcion-menu" type="button"
-          data-solo-admin disabled>
-          Pagos
-        </button>
-      </nav>
-
-      <button id="boton-cerrar-sesion" class="boton-cerrar-sesion"
-        type="button" disabled>
-        Cerrar sesión
-      </button>
-    </aside>
-
-    <div class="zona-principal">
-      <header class="encabezado-panel">
-        <div>
-          <h1>Panel de gestión</h1>
-          <p>Organizá la actividad de tu gimnasio.</p>
-        </div>
-
-        <div class="cuenta-panel">
-          <span id="nombre-personal"></span>
-          <span id="rol-personal" class="etiqueta-rol"></span>
-        </div>
-      </header>
-
-      <main class="contenido-panel">
-        <p id="mensaje-panel" class="mensaje-panel" role="status"></p>
-
-        <!-- El TypeScript habilitará esta sección para ADMIN. -->
-        <section id="resumen-administrador"
-          aria-labelledby="titulo-resumen" hidden>
-
-          <h2 id="titulo-resumen">Resumen del gimnasio</h2>
-
-          <div class="indicadores-panel">
-            <article class="tarjeta-indicador">
-              <h3>Clientes activos</h3>
-              <p id="cantidad-clientes" class="valor-indicador">—</p>
-            </article>
-
-            <article class="tarjeta-indicador">
-              <h3>Cuotas vencidas</h3>
-              <p id="cantidad-vencidas" class="valor-indicador">—</p>
-            </article>
-
-            <article class="tarjeta-indicador">
-              <h3>Cuotas próximas a vencer</h3>
-              <p id="cantidad-proximas" class="valor-indicador">—</p>
-            </article>
-
-            <article class="tarjeta-indicador">
-              <h3>Ocupación de turnos</h3>
-              <p id="ocupacion-turnos" class="valor-indicador">—</p>
-            </article>
-
-            <article class="tarjeta-indicador">
-              <h3>Ingresos del mes</h3>
-              <p id="ingresos-mes" class="valor-indicador">—</p>
-            </article>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#087ca7">
+    <title>GymManager · Inicio</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../panel.css">
+    <link rel="stylesheet" href="../modulos.css">
+    <link rel="stylesheet" href="./inicio.css">
+  </head>
+  <body>
+    <div id="vista" hidden>
+      <section class="tarjeta">
+        <p class="sobre-titulo">BIENVENIDO A GYMMANAGER</p>
+        <h2 id="saludo">
+        </h2>
+        <p id="descripcion-inicio" class="ayuda">
+        </p>
+      </section>
+      <div id="indicadores" class="indicadores">
+      </div>
+      <div id="accesos" class="acciones">
+      </div>
+      <section id="reportes" class="dos-columnas" hidden>
+        <div class="tarjeta">
+          <h2>Cuotas vencidas</h2>
+          <div id="vencidas">
           </div>
-        </section>
-
-        <!-- Inicio orientado al trabajo del entrenador. -->
-        <section id="resumen-entrenador"
-          aria-labelledby="titulo-entrenador" hidden>
-
-          <h2 id="titulo-entrenador">Tu espacio de trabajo</h2>
-          <p>
-            Consultá los clientes y organizá sus rutinas y turnos.
-          </p>
-        </section>
-      </main>
+        </div>
+        <div class="tarjeta">
+          <h2>Vencen en los próximos 7 días</h2>
+          <div id="proximas">
+          </div>
+        </div>
+        <div class="tarjeta">
+          <h2>Clientes sin cuota registrada</h2>
+          <div id="sin-cuota">
+          </div>
+        </div>
+        <div class="tarjeta">
+          <h2>Ocupación de turnos</h2>
+          <div id="ocupacion">
+          </div>
+        </div>
+      </section>
+      <section id="agenda-entrenador" class="tarjeta" hidden>
+        <h2>Mis turnos semanales</h2>
+        <div id="mis-turnos" class="lista-detalle">
+        </div>
+      </section>
     </div>
-  </div>
-
-  <script type="module" src="./inicio.ts"></script>
-</body>
+    <script type="module" src="./inicio.ts">
+    </script>
+  </body>
 </html>

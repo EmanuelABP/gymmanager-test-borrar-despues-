@@ -1,89 +1,38 @@
-import {
-  exigirSesion,
-  cerrarSesion,
-} from '../../compartidos/sesion.ts'
-
-// Obtenemos los elementos de la página.
-const mensaje = document.querySelector<HTMLParagraphElement>(
-  '#mensaje-perfil'
-)
-
-const presentacion = document.querySelector<HTMLElement>(
-  '.presentacion-cliente'
-)
-
-const contenido = document.querySelector<HTMLDivElement>(
-  '.contenido-perfil'
-)
-
-const botonCerrar = document.querySelector<HTMLButtonElement>(
-  '#boton-cerrar-sesion'
-)
-
-if (!mensaje || !presentacion || !contenido || !botonCerrar) {
-  throw new Error('No se encontraron los elementos del perfil.')
+import { prepararPanel } from '../../panel/estructura.ts';
+import { api, elemento, nodo, enlace, avisar, fecha } from '../../compartidos/api.ts';
+import { dibujarRutina } from '../../compartidos/rutinas.ts';
+import type { Ficha, Turno } from '../../compartidos/modelos.ts';
+async function iniciar(): Promise<void> {
+    const usuario = await prepararPanel('Mi perfil', ['USUARIO']);
+    if (!usuario)
+        return;
+    elemento('nombre-cliente').textContent = usuario.nombre + ' ' + usuario.apellido;
+    elemento('correo-cliente').textContent = usuario.email;
+    const { cliente, turnos } = await api<{
+        cliente: Ficha | null;
+        turnos: Turno[];
+    }>('/api/perfil');
+    if (!cliente) {
+        elemento('estado-ficha').textContent = 'Tu cuenta todavía no está vinculada a una ficha. Consultá con administración para completar la vinculación.';
+        dibujarRutina(elemento('rutina'));
+        elemento('turnos').append(nodo('p', 'Todavía no tenés turnos asignados.', 'estado-vacio'));
+        elemento('acceso-historia').append(nodo('p', 'Disponible cuando administración vincule tu ficha.', 'ayuda'));
+        return;
+    }
+    elemento('nombre-cliente').textContent = cliente.nombre + ' ' + cliente.apellido;
+    elemento('estado-ficha').textContent = cliente.activo ? 'Cliente desde ' + fecha(cliente.fechaCreacion) : 'Tu ficha está inactiva. Podés consultar tu información; contactá con administración para reactivarla.';
+    const vigente = cliente.rutinas.find(r => r.activo);
+    dibujarRutina(elemento('rutina'), vigente);
+    elemento('imprimir').hidden = !vigente;
+    elemento('imprimir').addEventListener('click', () => window.print());
+    const lista = elemento('turnos');
+    if (!turnos.length)
+        lista.append(nodo('p', 'Todavía no tenés turnos asignados.', 'estado-vacio'));
+    for (const turno of turnos) {
+        const item = nodo('article', '', 'item-detalle');
+        item.append(nodo('h3', turno.dia), nodo('p', turno.horaInicio + ' a ' + turno.horaFin), nodo('p', 'Entrenador: ' + turno.entrenador));
+        lista.append(item);
+    }
+    elemento('acceso-historia').append(enlace(cliente.activo ? 'Ver / editar mi historia' : 'Consultar mi historia', '../historia/historia.html'));
 }
-
-// Esperamos la comprobación antes de mostrar el contenido.
-presentacion.hidden = true
-contenido.hidden = true
-mensaje.textContent = 'Comprobando tu sesión…'
-
-async function iniciarPerfil(): Promise<void> {
-  try {
-    const usuario = await exigirSesion()
-
-    // Si no hay sesión, exigirSesion ya redirige al login.
-    if (!usuario) return
-
-    // Permitimos cerrar sesión incluso si entró otro rol.
-    botonCerrar!.disabled = false
-
-    if (usuario.rol !== 'USUARIO') {
-      mensaje!.textContent = 'Esta página está disponible para clientes.'
-      return
-    }
-
-    const nombre = document.querySelector<HTMLElement>('#nombre-cliente')
-    const correo = document.querySelector<HTMLElement>('#correo-cliente')
-    const iniciales = document.querySelector<HTMLElement>('#iniciales-cliente')
-    const aviso = document.querySelector<HTMLElement>('#aviso-vinculacion')
-
-    // Usamos textContent para mostrar los datos como texto.
-    if (nombre) {
-      nombre.textContent = `${usuario.nombre} ${usuario.apellido}`
-    }
-
-    if (correo) correo.textContent = usuario.email
-
-    if (iniciales) {
-      iniciales.textContent =
-        `${usuario.nombre.charAt(0)}${usuario.apellido.charAt(0)}`
-          .toUpperCase()
-    }
-
-    if (aviso) aviso.hidden = usuario.clienteId !== null
-
-    mensaje!.textContent = ''
-    presentacion!.hidden = false
-    contenido!.hidden = false
-  } catch {
-    mensaje!.textContent =
-      'No pudimos cargar tu perfil. Recargá la página para intentar nuevamente.'
-  }
-}
-
-// Cerramos la sesión únicamente cuando se pulsa el botón.
-botonCerrar.addEventListener('click', async () => {
-  botonCerrar.disabled = true
-
-  try {
-    await cerrarSesion()
-  } catch {
-    mensaje.textContent =
-      'No pudimos cerrar la sesión. Intentá nuevamente.'
-    botonCerrar.disabled = false
-  }
-})
-
-void iniciarPerfil()
+void iniciar().catch(avisar);
