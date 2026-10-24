@@ -9,7 +9,7 @@ const minutos = (hora: string) => Number(hora.slice(0, 2)) * 60 + Number(hora.sl
 const hora = (valor: number) => `${String(Math.floor(valor / 60)).padStart(2, '0')}:${String(valor % 60).padStart(2, '0')}`;
 export const configuracionInicial = { franjas: [{ inicio: '09:00', fin: '12:00' }, { inicio: '16:00', fin: '21:00' }], capacidad: 5, trabajos: [] };
 export async function consultarAgenda(db: Db) {
-    return await db.collection('configuracion').findOne({ _id: idConfiguracion }) ?? configuracionInicial;
+    return { ...configuracionInicial, ...await db.collection('configuracion').findOne({ _id: idConfiguracion }) };
 }
 type Transaccion = (operacion: (db: Db, sesion: ClientSession) => Promise<void>) => Promise<void>;
 export async function cambiarAgenda(transaccion: Transaccion, usuario: {
@@ -38,10 +38,22 @@ export async function cambiarAgenda(transaccion: Transaccion, usuario: {
                 throw new ErrorHTTP(409, `Ya existe un turno superpuesto el ${dia} entre ${inicio} y ${fin}. Revisá o desactivá el bloque anterior antes de generar horarios.`);
             }
         }
+        if (ruta === '/api/turnos/lote') {
+            if (usuario.rol !== 'ADMIN') throw new ErrorHTTP(403, 'Solo ADMIN administra turnos en lote.');
+            if (!Array.isArray(datos.ids) || !datos.ids.length || datos.ids.length > 2000 || typeof datos.eliminar !== 'boolean' || datos.confirmado !== true)
+                throw new ErrorHTTP(400, 'Seleccioná turnos y confirmá la operación.');
+            const ids = [...new Map(datos.ids.map(id => { const valor = identificador(id); return [valor.toHexString(), valor] as const; })).values()];
+            if (await turnos.countDocuments({ _id: { $in: ids } }, { session }) !== ids.length)
+                throw new ErrorHTTP(409, 'La selección cambió. Actualizá la agenda.');
+            if (datos.eliminar) await turnos.deleteMany({ _id: { $in: ids } }, { session });
+            else await turnos.updateMany({ _id: { $in: ids } }, { $set: { activo: false } }, { session });
+            mensaje = `${ids.length} turnos ${datos.eliminar ? 'eliminados definitivamente' : 'dados de baja'}.`;
+            return;
+        }
         if (ruta === '/api/turnos/generar') {
             if (usuario.rol !== 'ADMIN')
                 throw new ErrorHTTP(403, 'Solo ADMIN configura los horarios del gimnasio.');
-            const capacidad = entero(datos.capacidad, 'capacidad', 1, 5);
+            const capacidad = entero(datos.capacidad, 'capacidad', 1, Number.MAX_SAFE_INTEGER);
             if (!Array.isArray(datos.franjas) || datos.franjas.length < 1 || datos.franjas.length > 4)
                 throw new ErrorHTTP(400, 'Indicá entre una y cuatro franjas de apertura.');
             const franjas = datos.franjas.map(valor => {
@@ -103,7 +115,7 @@ export async function cambiarAgenda(transaccion: Transaccion, usuario: {
                 throw new ErrorHTTP(400, 'Seleccioná un día válido.', ['dia']);
             const horaInicio = texto(datos, 'horaInicio', 5, true), horaFin = texto(datos, 'horaFin', 5, true);
             validarFranja(horaInicio, horaFin);
-            const capacidad = entero(datos.capacidad, 'capacidad', 1, 5), entrenadorId = identificador(datos.entrenadorId);
+            const capacidad = entero(datos.capacidad, 'capacidad', 1, Number.MAX_SAFE_INTEGER), entrenadorId = identificador(datos.entrenadorId);
             await entrenador(entrenadorId);
             const id = datos.id ? identificador(datos.id) : undefined;
             const existente = id ? await turnos.findOne({ _id: id }, { session }) : null;
@@ -128,8 +140,6 @@ export async function cambiarAgenda(transaccion: Transaccion, usuario: {
                 throw new ErrorHTTP(404, 'El turno no existe.');
             if (datos.activo) {
                 validarFranja(turno.horaInicio, turno.horaFin);
-                if (turno.capacidad > 5)
-                    throw new ErrorHTTP(409, 'Adaptá el cupo a un máximo de cinco clientes antes de reactivarlo.');
                 await entrenador(turno.entrenadorId);
                 await sinSolapamientos(turno.dia, turno.horaInicio, turno.horaFin, turno.entrenadorId, turno._id);
             }
@@ -145,8 +155,8 @@ export async function cambiarAgenda(transaccion: Transaccion, usuario: {
         const asignar = ruta.endsWith('/asignar');
         if (asignar) {
             validarFranja(turno.horaInicio, turno.horaFin);
-            if (!turno.activo || turno.capacidad > 5 || turno.clientes.some(id => id.equals(clienteId)) || turno.clientes.length >= turno.capacidad)
-                throw new ErrorHTTP(409, 'El turno está completo, inactivo, tiene un cupo anterior mayor a cinco o el cliente ya está asignado.');
+            if (!turno.activo || turno.clientes.some(id => id.equals(clienteId)) || turno.clientes.length >= turno.capacidad)
+                throw new ErrorHTTP(409, 'El turno está completo, inactivo o el cliente ya está asignado.');
             await entrenador(turno.entrenadorId);
             const cliente = await db.collection('clientes').updateOne({ _id: clienteId, activo: true }, { $set: { fechaModificacion: new Date() } }, { session });
             if (!cliente.matchedCount)

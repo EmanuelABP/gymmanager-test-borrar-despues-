@@ -277,7 +277,7 @@ return async function gestionarClientes(
       await dependencias.transaccion(async (base, transaccion) => {
         const ahora = new Date()
         const cambio = await base.collection('clientes').updateOne({ _id: id, activo: !activo }, activo
-          ? { $set: { activo: true, fechaModificacion: ahora }, $unset: { fechaBaja: '' } }
+          ? { $set: { activo: true, fechaModificacion: ahora, inicioCicloCuotas: ahora, cicloCuotasId: new ObjectId() }, $unset: { fechaBaja: '' } }
           : { $set: { activo: false, fechaBaja: ahora, fechaModificacion: ahora } }, { session: transaccion })
         if (!cambio.matchedCount) throw new ErrorSolicitud(409, 'La ficha no existe o ya tiene ese estado.')
         if (!activo) {

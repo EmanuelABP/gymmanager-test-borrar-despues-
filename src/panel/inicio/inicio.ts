@@ -21,7 +21,7 @@ async function iniciar(): Promise<void> {
     if (!usuario)
         return;
     elemento('saludo').textContent = 'Hola, ' + usuario.nombre;
-    elemento('descripcion-inicio').textContent = usuario.rol === 'ADMIN' ? 'El estado de tu gimnasio, en un solo lugar. Las alertas corresponden a la última cuota de cada cliente activo.' : 'Tus turnos y las herramientas para acompañar a cada cliente.';
+    elemento('descripcion-inicio').textContent = usuario.rol === 'ADMIN' ? 'El estado de tu gimnasio, en un solo lugar. Las alertas corresponden al próximo vencimiento del ciclo de cada cliente activo.' : 'Tus turnos y las herramientas para acompañar a cada cliente.';
     const accesos = elemento('accesos');
     for (const [titulo, ruta] of [['Ver clientes', 'clientes'], ['Asignar rutina', 'rutinas'], ['Gestionar turnos', 'turnos']])
         accesos.append(enlace(titulo!, '../' + ruta + '/' + ruta + '.html'));

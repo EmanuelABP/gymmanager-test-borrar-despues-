@@ -267,7 +267,9 @@ test('agenda genera franjas por hora, conserva asignaciones y es idempotente', a
   assert.equal(app.documentos('turnos').length, 16)
   assert.equal(app.documentos('turnos').find(t => t._id.equals(id(41)))!.clientes.length, 1)
   assert.ok(app.documentos('turnos').every(t => t.capacidad === 5))
-  assert.equal((await app.pedir('/api/turnos/generar', { ...datos, capacidad: 6 })).estado, 400)
+  assert.equal((await app.pedir('/api/turnos/generar', { ...datos, capacidad: 25 })).estado, 200)
+  assert.ok(app.documentos('turnos').every(t => t.capacidad === 25))
+  for (const capacidad of [0, -1, 1.5]) assert.equal((await app.pedir('/api/turnos/generar', { ...datos, capacidad })).estado, 400)
 })
 
 test('agenda rechaza superposiciones sin cambios parciales y no permite generación al entrenador', async () => {
@@ -283,15 +285,15 @@ test('pendientes se calculan para las fichas inscriptas sin registrar pagos fict
   const app = entorno()
   const r = await app.pedir('/api/pagos')
   assert.equal(r.estado, 200)
-  assert.equal(r.datos.pendientes.length, 1)
-  assert.equal(r.datos.pendientes[0].cliente.dni, '35222333')
-  assert.equal(r.datos.pendientes[0].motivo, 'Sin cuota registrada')
+  assert.equal(r.datos.pendientes.length, 2)
+  assert.equal(r.datos.pendientes.find((p: any) => p.cliente.dni === '35222333').tipo, 'INSCRIPCION')
+  assert.equal(r.datos.pendientes.find((p: any) => p.cliente.dni === '40111222').cuotasVencidas, 0)
   assert.equal(app.documentos('pagos').length, 1)
   await app.db.collection('pagos').updateMany({}, { $set: { fechaVencimiento: new Date(Date.now() - 1000) } })
   assert.equal((await app.pedir('/api/pagos')).datos.pendientes.length, 2)
 })
 
-test('un entrenador nunca supera cinco clientes en la misma hora, incluso con solicitudes simultáneas', async () => {
+test('un entrenador nunca supera el cupo configurado en la misma hora, incluso con solicitudes simultáneas', async () => {
   const app = entorno('ENTRENADOR')
   await app.db.collection('turnos').updateOne({ _id: id(41) }, { $set: { capacidad: 5 } })
   for (let numero = 61; numero <= 65; numero++) await app.db.collection('clientes').insertOne({ _id:id(numero), nombre:'Prueba', apellido:String(numero), dni:String(50000000+numero), activo:true, fechaCreacion:new Date(), fechaModificacion:new Date(), rutinas:[] })
@@ -300,3 +302,103 @@ test('un entrenador nunca supera cinco clientes en la misma hora, incluso con so
   assert.equal(respuestas.filter(r => r.estado === 409).length, 1)
   assert.equal(app.documentos('turnos')[0]!.clientes.length, 5)
 })
+
+
+test('cupo de 25 permite asignar, desactivar y reactivar sin un máximo fijo de cinco', async () => {
+ const app = entorno();
+ assert.equal((await app.pedir('/api/turnos', { id: id(41).toHexString(), dia:'LUNES', horaInicio:'18:00', horaFin:'19:00', capacidad:25, entrenadorId:id(2).toHexString() })).estado, 200);
+ assert.equal((await app.pedir('/api/turnos/asignar', { turnoId:id(41).toHexString(), clienteId:id(12).toHexString() })).estado, 200);
+ assert.equal((await app.pedir('/api/turnos/estado', { id:id(41).toHexString(), activo:false })).estado, 200);
+ assert.equal((await app.pedir('/api/turnos/estado', { id:id(41).toHexString(), activo:true })).estado, 200);
+});
+
+test('ADMIN crea cuentas USUARIO sin generar una ficha; ENTRENADOR no puede crearlas', async () => {
+ const datos = { nombre:'Cuenta', apellido:'Nueva', email:'nueva@example.test', rol:'USUARIO', contrasena:'Prueba1234' };
+ const app = entorno(); assert.equal((await app.pedir('/api/cuentas', datos)).estado, 200);
+ assert.equal(app.documentos('usuarios').at(-1)!.rol, 'USUARIO'); assert.equal(app.documentos('clientes').length, 2);
+ assert.equal((await entorno('ENTRENADOR').pedir('/api/cuentas', datos)).estado, 403);
+});
+
+test('baja masiva conserva historial y borrado de turnos es atómico y exclusivo de ADMIN', async () => {
+ const app = entorno(), datos = { ids:[id(41).toHexString()], eliminar:false, confirmado:true };
+ assert.equal((await entorno('ENTRENADOR').pedir('/api/turnos/lote', datos)).estado, 403);
+ assert.equal((await app.pedir('/api/turnos/lote', { ...datos, ids:[id(41).toHexString(), id(99).toHexString()] })).estado, 409);
+ assert.equal(app.documentos('turnos')[0]!.activo, true);
+ assert.equal((await app.pedir('/api/turnos/lote', datos)).estado, 200);
+ assert.equal(app.documentos('turnos')[0]!.clientes.length, 1);
+ assert.equal((await app.pedir('/api/turnos/lote', { ...datos, eliminar:true, confirmado:false })).estado, 400);
+ assert.equal((await app.pedir('/api/turnos/lote', { ...datos, eliminar:true })).estado, 200);
+ assert.equal(app.documentos('turnos').length, 0);
+});
+
+test('eliminar cliente exige baja y confirmación; borra pagos y desvincula sin borrar su cuenta', async () => {
+ const app = entorno(), datos = { entidad:'clientes', id:id(11).toHexString(), confirmado:true };
+ assert.equal((await app.pedir('/api/eliminar', datos)).estado, 409);
+ assert.equal((await entorno('ENTRENADOR').pedir('/api/eliminar', datos)).estado, 403);
+ await app.pedir('/api/clientes/desactivar', { clienteId:id(11).toHexString() });
+ assert.equal((await app.pedir('/api/eliminar', { ...datos, confirmado:false })).estado, 400);
+ assert.equal((await app.pedir('/api/eliminar', datos)).estado, 200);
+ assert.equal(app.documentos('clientes').length, 1); assert.equal(app.documentos('pagos').length, 0);
+ assert.equal(app.documentos('usuarios')[2]!.clienteId, undefined);
+ assert.equal(app.documentos('turnos')[0]!.historialClientes.length, 0);
+});
+
+test('borrado de ejercicio referenciado se bloquea sin perder rutinas', async () => {
+ const app = entorno();
+ await app.db.collection('clientes').updateOne({ _id:id(11) }, { $set: { rutinas:[{ entrenadorId:id(2), activo:true, ejercicios:[{ ejercicioId:id(31) }] }] } });
+ await app.db.collection('ejercicios').updateOne({ _id:id(31) }, { $set:{ activo:false } });
+ assert.equal((await app.pedir('/api/eliminar', { entidad:'ejercicios', id:id(31).toHexString(), confirmado:true })).estado, 409);
+ assert.equal(app.documentos('ejercicios').length, 1);
+});
+
+test('inscripción y cuotas conservan intervalos exactos de 30 días; la baja reinicia el ciclo', async () => {
+ const app = entorno(); const clienteId = id(12).toHexString();
+ const crear = (tipo: string, fechaPago: string) => app.pedir('/api/pagos', { clienteId, tipo, fechaPago, monto:'1000', estado:'PAGADO' });
+ assert.equal((await crear('INSCRIPCION', '2026-01-01')).estado, 201);
+ assert.equal(app.documentos('pagos').at(-1)!.fechaVencimiento.toISOString(), '2026-01-31T03:00:00.000Z');
+ assert.equal((await crear('INSCRIPCION', '2026-01-02')).estado, 409);
+ assert.equal((await crear('CUOTA', '2026-02-10')).estado, 201);
+ const cuota = app.documentos('pagos').at(-1)!;
+ assert.equal(cuota.fechaVencimiento.toISOString(), '2026-01-31T03:00:00.000Z');
+ assert.equal(cuota.finVigencia.toISOString(), '2026-03-02T03:00:00.000Z');
+ await app.pedir('/api/clientes/desactivar', { clienteId });
+ assert.equal((await app.pedir('/api/pagos')).datos.pendientes.some((p: any) => p.cliente._id === clienteId), false);
+ await app.pedir('/api/clientes/reactivar', { clienteId });
+ const nuevo = (await app.pedir('/api/pagos')).datos.pendientes.find((p: any) => p.cliente._id === clienteId);
+ assert.equal(nuevo.tipo, 'INSCRIPCION'); assert.equal(nuevo.cuotasVencidas, undefined);
+ assert.equal(app.documentos('pagos').length, 3);
+});
+
+
+test('reactivar permite comenzar con una cuota de 30 días y no cobrar pendientes del ciclo anterior', async () => {
+ const app = entorno(), clienteId = id(12).toHexString();
+ const hoy = new Date().toLocaleDateString('sv-SE', { timeZone:'America/Argentina/Buenos_Aires' });
+ const datos = { clienteId, tipo:'CUOTA', monto:'1000', estado:'PENDIENTE', fechaPago:hoy };
+ assert.equal((await app.pedir('/api/pagos', datos)).estado, 201);
+ const viejo = app.documentos('pagos').at(-1)!;
+ await app.pedir('/api/clientes/desactivar', { clienteId });
+ await app.pedir('/api/clientes/reactivar', { clienteId });
+ assert.equal((await app.pedir('/api/pagos/cobrar', { id:viejo._id.toHexString() })).estado, 409);
+ assert.equal((await app.pedir('/api/pagos', { ...datos, estado:'PAGADO' })).estado, 201);
+ const nuevo = app.documentos('pagos').at(-1)!;
+ assert.equal(nuevo.finVigencia.getTime() - fechaArgentina(hoy, 'fecha').getTime(), 30 * 86400000);
+ assert.ok(nuevo.cicloCuotasId.equals(app.documentos('clientes')[1]!.cicloCuotasId));
+});
+
+test('borrar cuenta sin historial conserva su ficha y borra sus sesiones; el responsable histórico se conserva', async () => {
+ const app = entorno();
+ await app.db.collection('sesiones').insertOne({ usuarioId:id(3), tokenHash:'ficticio' });
+ await app.db.collection('usuarios').updateOne({ _id:id(3) }, { $set:{ activo:false } });
+ assert.equal((await app.pedir('/api/eliminar', { entidad:'usuarios', id:id(3).toHexString(), confirmado:true })).estado, 200);
+ assert.equal(app.documentos('clientes')[0]!.usuarioId, undefined);
+ assert.equal(app.documentos('sesiones').length, 0);
+ await app.db.collection('usuarios').updateOne({ _id:id(2) }, { $set:{ activo:false } });
+ assert.equal((await app.pedir('/api/eliminar', { entidad:'usuarios', id:id(2).toHexString(), confirmado:true })).estado, 409);
+});
+
+test('la configuración conserva sus valores iniciales si solo existen contadores internos', async () => {
+ const app = entorno();
+ await app.pedir('/api/turnos/estado', { id:id(41).toHexString(), activo:false });
+ const r = await app.pedir('/api/turnos/configuracion');
+ assert.equal(r.estado, 200); assert.equal(r.datos.configuracion.franjas.length, 2); assert.equal(r.datos.configuracion.capacidad, 5);
+});

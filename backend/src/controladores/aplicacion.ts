@@ -1,4 +1,5 @@
-import { pendientesDeCobro } from '../servicios/cobranza.ts';
+import { eliminarRegistro } from '../servicios/eliminacion.ts';
+import { pagosDelCiclo, siguienteVencimiento, sumarDias, pendientesDeCobro } from '../servicios/cobranza.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Db, Document } from 'mongodb';
 import { MongoServerError, ObjectId } from 'mongodb';
@@ -58,7 +59,7 @@ export async function actualizarVencimientos(db: Db, ahora = new Date()): Promis
         { $sort: { fechaVencimiento: -1, fechaPago: -1, _id: -1 } },
         { $group: { _id: '$clienteId', pago: { $first: '$$ROOT' } } },
     ]).toArray();
-    const vencidos = ultimas.filter(({ pago }) => pago.fechaVencimiento < ahora && pago.estado !== 'VENCIDO');
+    const vencidos = ultimas.filter(({ pago }) => (pago.finVigencia ?? pago.fechaVencimiento) < ahora && pago.estado !== 'VENCIDO');
     await Promise.all(vencidos.map(({ pago }) => db.collection('pagos').updateOne({ _id: pago._id, estado: pago.estado, fechaVencimiento: { $lt: ahora } }, { $set: { estado: 'VENCIDO', ...(typeof pago.cobrado !== 'boolean' ? { cobrado: pago.estado === 'PAGADO' } : {}) } })));
 }
 // Inyección de dependencias para comprobar permisos y reglas sin escribir en Atlas.
@@ -140,6 +141,12 @@ export function crearGestorAplicacion(dependencias = {
             }
             // Todas las rutas siguientes pertenecen al personal.
             exigirRol(usuario, rolesPersonal);
+            if (ruta === '/api/eliminar' && metodo === 'POST') {
+                exigirRol(usuario, ['ADMIN']);
+                await eliminarRegistro(dependencias.transaccion, usuario.id, await leerJSON(req));
+                responder(res, 200, { mensaje: 'Registro eliminado definitivamente.' });
+                return;
+            }
             if (ruta === '/api/personal' && metodo === 'GET') {
                 const personal = await db.collection('usuarios').find({ rol: { $in: rolesPersonal }, activo: true }, { projection: { nombre: 1, apellido: 1, rol: 1, esEntrenador: 1 } }).sort({ apellido: 1 }).toArray();
                 responder(res, 200, { personal: personal.filter(cuenta => esEntrenador({ rol: cuenta.rol, esEntrenador: cuenta.esEntrenador })) });
@@ -268,22 +275,41 @@ export function crearGestorAplicacion(dependencias = {
                         throw new ErrorHTTP(400, 'Seleccioná el tipo de pago.');
                     if (!['PAGADO', 'PENDIENTE'].includes(String(datos.estado)))
                         throw new ErrorHTTP(400, 'Seleccioná el estado del pago.');
-                    const fechaPago = fechaArgentina(datos.fechaPago, 'fechaPago'), fechaVencimiento = fechaArgentina(datos.fechaVencimiento, 'fechaVencimiento', true);
-                    if (fechaVencimiento < fechaPago)
-                        throw new ErrorHTTP(400, 'El vencimiento no puede ser anterior al pago.', ['fechaVencimiento']);
+                    const fechaPago = fechaArgentina(datos.fechaPago, 'fechaPago');
                     const hoy = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Argentina/Buenos_Aires' });
                     if (String(datos.fechaPago) > hoy)
                         throw new ErrorHTTP(400, 'La fecha de pago no puede ser futura.', ['fechaPago']);
-                    await db.collection('pagos').insertOne({ clienteId, tipo: datos.tipo, monto: montoDecimal(datos.monto), fechaPago, fechaVencimiento, estado: datos.estado, cobrado: datos.estado === 'PAGADO', observaciones: texto(datos, 'observaciones', 2000), usuarioRegistroId: new ObjectId(usuario.id), fechaCreacion: new Date() });
+                    const monto = montoDecimal(datos.monto);
+                    await dependencias.transaccion(async (base, session) => {
+                        // Escribir la ficha serializa cobros simultáneos del mismo cliente.
+                        const cambio = await base.collection('clientes').updateOne({ _id: clienteId, activo: true }, { $inc: { revisionCobranza: 1 } }, { session });
+                        if (!cambio.matchedCount) throw new ErrorHTTP(409, 'El cliente ya no está activo.');
+                        const cliente = (await base.collection('clientes').findOne({ _id: clienteId }, { session }))!;
+                        if (cliente.inicioCicloCuotas && fechaPago.toLocaleDateString('sv-SE', { timeZone: 'America/Argentina/Buenos_Aires' }) < cliente.inicioCicloCuotas.toLocaleDateString('sv-SE', { timeZone: 'America/Argentina/Buenos_Aires' }))
+                            throw new ErrorHTTP(400, 'El pago no puede ser anterior a la reactivación.', ['fechaPago']);
+                        const historial = await base.collection('pagos').find({ clienteId }, { session }).toArray();
+                        if (pagosDelCiclo(cliente, historial).some(p => p.cobrado === false || p.estado === 'PENDIENTE')) throw new ErrorHTTP(409, 'Hay un pago sin cobrar. Registrá su cobro antes de crear otra cuota.');
+                        const proxima = siguienteVencimiento(cliente, historial);
+                        if (datos.tipo === 'INSCRIPCION' && proxima) throw new ErrorHTTP(409, 'Ya hay una inscripción o cuota en este período. Registrá una CUOTA.');
+                        const fechaVencimiento = datos.tipo === 'INSCRIPCION' ? sumarDias(fechaPago) : proxima ?? fechaPago;
+                        await base.collection('pagos').insertOne({ clienteId, ...(cliente.cicloCuotasId ? { cicloCuotasId: cliente.cicloCuotasId } : {}), tipo: datos.tipo, monto, fechaPago, fechaVencimiento,
+                            ...(datos.tipo === 'CUOTA' ? { finVigencia: sumarDias(fechaVencimiento) } : {}),
+                            estado: datos.estado, cobrado: datos.estado === 'PAGADO', observaciones: texto(datos, 'observaciones', 2000), usuarioRegistroId: new ObjectId(usuario.id), fechaCreacion: new Date() }, { session });
+                    });
                     await actualizarVencimientos(db);
                     responder(res, 201, { mensaje: 'Pago registrado correctamente.' });
                     return;
                 }
                 if (ruta === '/api/pagos/cobrar' && metodo === 'POST') {
                     const datos = await leerJSON(req);
-                    const resultado = await db.collection('pagos').updateOne({ _id: identificador(datos.id), cobrado: false }, { $set: { cobrado: true, estado: 'PAGADO', fechaPago: new Date(), usuarioCobroId: new ObjectId(usuario.id) } });
-                    if (!resultado.matchedCount)
-                        throw new ErrorHTTP(409, 'El pago no existe o ya fue cobrado.');
+                    await dependencias.transaccion(async (base, session) => {
+                        const pago = await base.collection('pagos').findOne({ _id: identificador(datos.id), cobrado: false }, { session });
+                        if (!pago) throw new ErrorHTTP(409, 'El pago no existe o ya fue cobrado.');
+                        const cliente = await base.collection('clientes').findOne({ _id: pago.clienteId, activo: true }, { session });
+                        if (!cliente || !pagosDelCiclo(cliente, [pago]).length) throw new ErrorHTTP(409, 'Ese pago pertenece a una ficha inactiva o a un período anterior.');
+                        await base.collection('clientes').updateOne({ _id: cliente._id, activo: true }, { $inc: { revisionCobranza: 1 } }, { session });
+                        await base.collection('pagos').updateOne({ _id: pago._id, cobrado: false }, { $set: { cobrado: true, estado: 'PAGADO', fechaPago: new Date(), usuarioCobroId: new ObjectId(usuario.id) } }, { session });
+                    });
                     await actualizarVencimientos(db);
                     responder(res, 200, { mensaje: 'Cobro registrado correctamente.' });
                     return;
@@ -301,17 +327,13 @@ export function crearGestorAplicacion(dependencias = {
                 }
                 if (ruta !== '/api/resumen')
                     throw new ErrorHTTP(404, 'Ruta no encontrada.');
-                const ultimas = new Map<string, Document>();
-                for (const pago of detalle)
-                    if (pago.tipo === 'CUOTA' && !ultimas.has(pago.clienteId.toHexString()))
-                        ultimas.set(pago.clienteId.toHexString(), pago);
+                const calendario = await pendientesDeCobro(db);
                 const ahora = new Date(), limite = new Date(ahora.getTime() + 7 * 86400000);
-                const cuotas = [...ultimas.values()].filter(pago => pago.cliente?.activo);
-                const vencidas = cuotas.filter(pago => pago.fechaVencimiento < ahora);
-                const proximas = cuotas.filter(pago => pago.fechaVencimiento >= ahora && pago.fechaVencimiento <= limite);
+                const vencidas = calendario.filter(p => p.fechaVencimiento < ahora).map(p => ({ ...p, clienteId: p.cliente._id }));
+                const proximas = calendario.filter(p => p.fechaVencimiento >= ahora && p.fechaVencimiento <= limite).map(p => ({ ...p, clienteId: p.cliente._id }));
                 const mes = ahora.toLocaleDateString('sv-SE', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 7);
                 const ingresos = detalle.filter(pago => (pago.cobrado === true || (pago.cobrado === undefined && pago.estado === 'PAGADO')) && pago.fechaPago.toLocaleDateString('sv-SE', { timeZone: 'America/Argentina/Buenos_Aires' }).startsWith(mes));
-                responder(res, 200, { pendientes: await pendientesDeCobro(db), activos: clientes.filter(cliente => cliente.activo).length, vencidas, proximas, sinCuota: clientes.filter(cliente => cliente.activo && !ultimas.has(cliente._id.toHexString())), ingresos: sumarMontos(ingresos.map(pago => pago.monto)), turnos: await consultarTurnos(db, { activo: true }) });
+                responder(res, 200, { pendientes: calendario.filter(p => !p.fechaVencimiento || p.fechaVencimiento < ahora), activos: clientes.filter(cliente => cliente.activo).length, vencidas, proximas, sinCuota: calendario.filter(p => p.tipo === 'INSCRIPCION').map(p => p.cliente), ingresos: sumarMontos(ingresos.map(pago => pago.monto)), turnos: await consultarTurnos(db, { activo: true }) });
                 return;
             }
             if (ruta.startsWith('/api/cuentas')) {
@@ -328,8 +350,8 @@ export function crearGestorAplicacion(dependencias = {
                     const email = texto(datos, 'email', 254, true).toLowerCase();
                     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
                         throw new ErrorHTTP(400, 'Ingresá un correo válido.', ['email']);
-                    if (!rolesPersonal.includes(String(datos.rol)))
-                        throw new ErrorHTTP(400, 'Seleccioná un rol de personal válido.');
+                    if (!['USUARIO', 'ENTRENADOR', 'ADMIN'].includes(String(datos.rol)))
+                        throw new ErrorHTTP(400, 'Seleccioná un rol válido.');
                     await db.collection('usuarios').createIndex({ email: 1 }, { unique: true });
                     await db.collection('usuarios').insertOne({ nombre: texto(datos, 'nombre', 100, true), apellido: texto(datos, 'apellido', 100, true), email, rol: datos.rol, esEntrenador: datos.rol === 'ADMIN' && datos.esEntrenador === true, passwordHash: await hash(validarContrasena(datos.contrasena), 12), activo: true, fechaCreacion: new Date(), fechaModificacion: new Date() });
                 }

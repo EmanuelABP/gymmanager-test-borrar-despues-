@@ -13,12 +13,12 @@
   <body>
     <div id="vista" hidden><section class="tarjeta" id="configurar-agenda" hidden>
 <h2>Horarios del gimnasio y días de trabajo</h2>
-<p class="ayuda">Configurá las franjas de apertura y marcá los días de cada ENTRENADOR. Se generará un turno por hora y por entrenador, con un máximo de cinco clientes por turno.</p>
+<p class="ayuda">Configurá las franjas de apertura y marcá los días de cada ENTRENADOR. Se generará un turno por hora y por entrenador, con el cupo que elijas por turno.</p>
 <form id="formulario-agenda" class="formulario" novalidate>
 <div id="franjas-apertura" class="ancho lista-detalle"></div>
 <div class="acciones"><button id="agregar-franja" class="boton secundario" type="button">Agregar franja de apertura</button></div>
-<label class="campo">Clientes por entrenador y hora<input name="capacidad" type="number" min="1" max="5" value="5" required></label>
-<div id="dias-entrenadores" class="ancho lista-detalle"></div>
+<label class="campo">Clientes por entrenador y hora<input name="capacidad" type="number" min="1" value="5" required></label>
+<fieldset class="ancho dias-entrenador" id="dias-comunes"><legend>Días para los entrenadores seleccionados</legend></fieldset><details class="ancho seleccion-entrenadores"><summary>Seleccionar entrenadores <span id="cantidad-entrenadores"></span></summary><div id="dias-entrenadores" class="lista-detalle"></div></details>
 <p class="ayuda ancho">Los turnos coincidentes conservan sus clientes. Generar no elimina otros horarios. Si hay bloques anteriores de varias horas, editá o desactivá esos bloques primero.</p>
 <div class="acciones"><button class="boton" type="submit">Guardar y generar agenda semanal</button></div>
 </form></section><details id="excepcion-turno" class="tarjeta"><summary>Crear o editar un turno individual</summary>
@@ -43,7 +43,7 @@
           </label>
           <label class="campo">Hasta *<input name="horaFin" type="time" required>
           </label>
-          <label class="campo">Cupo máximo *<input name="capacidad" type="number" required min="1" max="5" step="1">
+          <label class="campo">Cupo máximo *<input name="capacidad" type="number" required min="1" step="1">
           </label>
           <label class="campo ancho">Observaciones<textarea name="observaciones" maxlength="2000" rows="3"></textarea>
           </label>
@@ -71,7 +71,7 @@
       </section>
       <section class="tarjeta">
         <h2>Horarios y ocupación</h2>
-        <div class="barra-seccion"><label>Entrenador <select id="filtro-entrenador"></select></label><label>Día <select id="filtro-dia"><option value="">Todos los días</option><option>LUNES</option><option>MARTES</option><option>MIERCOLES</option><option>JUEVES</option><option>VIERNES</option><option>SABADO</option><option>DOMINGO</option></select></label><label>Estado <select id="filtro-estado"><option value="activos">Activos</option><option value="todos">Todos</option><option value="inactivos">Inactivos</option></select></label></div><div id="listado" class="lista-detalle">
+        <div class="barra-seccion"><label>Entrenador <select id="filtro-entrenador"></select></label><label>Día <select id="filtro-dia"><option value="">Todos los días</option><option>LUNES</option><option>MARTES</option><option>MIERCOLES</option><option>JUEVES</option><option>VIERNES</option><option>SABADO</option><option>DOMINGO</option></select></label><label>Estado <select id="filtro-estado"><option value="activos">Activos</option><option value="todos">Todos</option><option value="inactivos">Inactivos</option></select></label></div><div id="acciones-masivas" class="acciones" hidden><button type="button" id="seleccionar-visibles" class="boton secundario">Seleccionar visibles</button><button type="button" id="baja-seleccion" class="boton peligro">Dar de baja selección</button><button type="button" id="borrar-seleccion" class="boton peligro">Eliminar definitivamente selección</button><span id="cantidad-seleccionados" role="status"></span></div><div id="listado" class="lista-detalle">
         </div>
       </section>
     </div>

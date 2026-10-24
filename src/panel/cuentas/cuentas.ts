@@ -34,6 +34,10 @@ function mostrar(): void {
                 await cargar();
                 avisar(r.mensaje, true);
             }, c.activo));
+        if (!c.activo && c._id !== miId) grupo.append(boton('Eliminar definitivamente', async () => {
+            if (!await confirmar('La cuenta de ' + nombreCompleto(c) + ' y sus sesiones se borrarán para siempre. Su ficha de cliente se conservará sin vincular. No podrás recuperar la cuenta. Si figura como responsable en historiales, no se permitirá el borrado.', 'Eliminar cuenta definitivamente')) return;
+            const r = await api('/api/eliminar', { entidad: 'usuarios', id: c._id, confirmado: true }); await cargar(); avisar(r.mensaje, true);
+        }, true));
         return [nombreCompleto(c), c.email, c.rol + (c.rol === 'ADMIN' && c.esEntrenador ? ' + ENTRENADOR' : ''), c.activo ? 'Activa' : 'Inactiva', grupo];
     }));
 }

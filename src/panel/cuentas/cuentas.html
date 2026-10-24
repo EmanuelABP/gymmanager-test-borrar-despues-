@@ -13,7 +13,7 @@
   <body>
     <div id="vista" hidden>
       <section class="tarjeta">
-        <h2>Crear cuenta de personal</h2>
+        <h2>Crear cuenta</h2>
         <form id="formulario-cuenta" class="formulario" novalidate>
           <label class="campo">Nombre *<input name="nombre" type="text" required maxlength="100">
           </label>
@@ -22,14 +22,14 @@
           <label class="campo">Correo *<input name="email" type="email" required maxlength="254">
           </label>
           <label class="campo">Rol *<select name="rol" id="rol" required>
-              <option value="ENTRENADOR">ENTRENADOR</option>
+              <option value="USUARIO">USUARIO</option><option value="ENTRENADOR">ENTRENADOR</option>
               <option value="ADMIN">ADMIN</option>
             </select>
           </label>
           <label class="campo">Contraseña inicial (mínimo 8 caracteres; máximo 72 bytes) *<input name="contrasena" type="password" required minlength="8" autocomplete="new-password">
           </label>
           <label class="ancho"><input name="esEntrenador" type="checkbox"> Si el rol es ADMIN, también trabaja como ENTRENADOR.</label>
-          <p class="ayuda ancho">El personal puede cambiar su contraseña desde Mi cuenta. Las cuentas de clientes se crean desde el registro público.</p>
+          <p class="ayuda ancho">Cada persona puede cambiar su contraseña desde Mi cuenta. Una cuenta USUARIO puede vincularse después a una ficha de cliente.</p>
           <div class="acciones">
             <button class="boton" type="submit">Crear cuenta</button>
             <button class="boton secundario" type="reset">Limpiar</button>

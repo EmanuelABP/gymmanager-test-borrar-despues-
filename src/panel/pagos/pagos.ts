@@ -10,6 +10,7 @@ interface Pendiente {
         dni: string;
     };
     motivo: string;
+    tipo?: string;
     pagoId?: string;
     montoSugerido: string;
     fechaVencimiento?: string;
@@ -31,9 +32,9 @@ function mostrar(): void {
             (formulario.elements.namedItem('monto') as HTMLInputElement).value = p.monto;
             (formulario.elements.namedItem('tipo') as HTMLSelectElement).value = 'CUOTA';
             (formulario.elements.namedItem('fechaPago') as HTMLInputElement).value = hoy();
-            (formulario.elements.namedItem('fechaVencimiento') as HTMLInputElement).value = '';
+            actualizarVistaVencimiento();
             formulario.scrollIntoView({ block: 'start' });
-            (formulario.elements.namedItem('fechaVencimiento') as HTMLInputElement).focus();
+            (formulario.elements.namedItem('monto') as HTMLInputElement).focus();
         }), ...(p.cobrado === false ? [boton('Registrar cobro', async () => {
                 if (!await confirmar('¿Confirmás el cobro de ' + dinero(p.monto) + '?'))
                     return;
@@ -48,15 +49,13 @@ function prepararCobro(p: Pendiente): void {
     formulario.reset();
     for (const [campo, valor] of Object.entries({ clienteId: p.cliente._id, tipo: 'CUOTA', monto: p.montoSugerido, fechaPago: hoy() }))
         (formulario.elements.namedItem(campo) as HTMLInputElement).value = valor;
-    const [anio, mes, dia] = hoy().split('-').map(Number);
-    const ultimo = new Date(Date.UTC(anio!, mes! + 1, 0)).getUTCDate();
-    const nueva = new Date(Date.UTC(anio!, mes!, Math.min(dia!, ultimo)));
-    (formulario.elements.namedItem('fechaVencimiento') as HTMLInputElement).value = nueva.toISOString().slice(0, 10);
+    (formulario.elements.namedItem('tipo') as HTMLSelectElement).value = p.tipo ?? 'CUOTA';
+    actualizarVistaVencimiento();
     formulario.scrollIntoView({ block: 'start' });
     (formulario.elements.namedItem('monto') as HTMLInputElement).focus();
 }
 function mostrarPendientes(): void {
-    tabla(elemento('pendientes-cobro'), ['Cliente', 'DNI', 'Situación', 'Último vencimiento', 'Acción'], pendientes.map(p => [nombreCompleto(p.cliente), p.cliente.dni, p.motivo, fecha(p.fechaVencimiento), boton(p.pagoId ? 'Registrar cobro' : 'Cobrar cuota', async () => {
+    tabla(elemento('pendientes-cobro'), ['Cliente', 'DNI', 'Situación', 'Próximo vencimiento', 'Acción'], pendientes.map(p => [nombreCompleto(p.cliente), p.cliente.dni, p.motivo, fecha(p.fechaVencimiento), boton(p.pagoId ? 'Registrar cobro' : p.tipo === 'INSCRIPCION' ? 'Cobrar inscripción' : 'Cobrar cuota', async () => {
             if (!p.pagoId) {
                 prepararCobro(p);
                 return;
@@ -77,6 +76,7 @@ async function cargar(): Promise<void> {
     pendientes = resultado.pendientes;
     mostrar();
     mostrarPendientes();
+    actualizarVistaVencimiento();
 }
 async function iniciar(): Promise<void> {
     if (!await prepararPanel('Pagos', ['ADMIN']))
@@ -87,9 +87,20 @@ async function iniciar(): Promise<void> {
     opciones(elemento<HTMLSelectElement>('clienteId'), clientes.filter(c => c.activo).map(c => ({ valor: c.id, texto: nombreCompleto(c) })));
     (formulario.elements.namedItem('fechaPago') as HTMLInputElement).value = hoy();
     manejarFormulario('formulario-pago', async (datos) => { const r = await api('/api/pagos', datos); formulario.reset(); (formulario.elements.namedItem('fechaPago') as HTMLInputElement).value = hoy(); await cargar(); return r.mensaje; });
+    for (const nombre of ['clienteId', 'tipo', 'fechaPago']) (formulario.elements.namedItem(nombre) as HTMLInputElement).addEventListener('change', actualizarVistaVencimiento);
+    formulario.addEventListener('reset', () => setTimeout(actualizarVistaVencimiento, 0));
     elemento('buscar').addEventListener('input', mostrar);
     elemento('estado-filtro').addEventListener('change', mostrar);
     elemento('imprimir').addEventListener('click', () => window.print());
     await cargar();
 }
 void iniciar().catch(avisar);
+
+function actualizarVistaVencimiento(): void {
+    const valor = (nombre: string) => (formulario.elements.namedItem(nombre) as HTMLInputElement).value;
+    const pendiente = pendientes.find(p => p.cliente._id === valor('clienteId'));
+    const base = valor('tipo') === 'CUOTA' ? pendiente?.fechaVencimiento : undefined;
+    let fecha = base ? new Date(base) : new Date(valor('fechaPago') + 'T00:00:00-03:00');
+    if (!base && valor('tipo') === 'INSCRIPCION') fecha = new Date(fecha.getTime() + 30 * 86400000);
+    (formulario.elements.namedItem('fechaVencimiento') as HTMLInputElement).value = Number.isFinite(fecha.getTime()) ? fecha.toLocaleDateString('sv-SE', { timeZone: 'America/Argentina/Buenos_Aires' }) : '';
+}

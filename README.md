@@ -566,3 +566,20 @@ Pagos calcula Cuotas a cobrar a partir de fichas activas y cuotas existentes, si
 Verificación: compilación de web/backend y pruebas aisladas actualizadas; consulta de solo lectura con documentos ficticios en Atlas para comprobar también la edición de rutinas. En navegador, con datos en memoria: diálogo propio, resumen y modificación de un ejercicio, asignación y edición de rutina, generación de 16 franjas para dos días conservando la asignación existente. No se realizaron escrituras de prueba sobre los datos reales de Atlas.
 
 Resultado final del avance 37: 24 pruebas automatizadas aprobadas, build de frontend y backend correcto, y comprobación de solo lectura en Atlas aprobada. Se verificó también en navegador la aparición automática de una ficha sin cuota dentro de Cuotas a cobrar. Captura del diálogo con datos ficticios: docs/capturas/confirmacion-estilo.png. Los bloques anteriores de varias horas se mantienen para revisión del usuario; no se migraron ni movieron clientes reales.
+
+
+### 38. Mejoras de agenda, cuentas, Excel, móvil y cobranza automática
+
+Con nueva autorización del usuario se quitó el límite fijo de cinco clientes en web y backend (creación, generación, edición, asignación y reactivación). Se mantiene un cupo entero positivo configurable. Agenda tiene días comunes y desplegable de entrenadores con casillas, selección múltiple de turnos, baja masiva y borrado definitivo con advertencia. La configuración inicial se conserva aun cuando solo existen contadores internos.
+
+ADMIN también puede crear cuentas USUARIO. El menú móvil tiene bordes y fondo celeste con opción activa diferenciada; se corrigió un desborde horizontal en las tablas de agenda. Captura de prueba con datos ficticios: docs/capturas/menu-movil.jpg.
+
+Se incorporó importación de ejercicios desde .xlsx: plantilla, columnas código/nombre/grupo muscular/descripción, vista previa, controles de filas y duplicados, carga secuencial y resumen de errores. Hasta 1000 ejercicios/2 MB por archivo. ExcelJS se descarga al abrir esa función; se actualizó su dependencia uuid mediante override y npm no informó vulnerabilidades en la revisión.
+
+Cuotas: inscripción +30 días; cobros sucesivos conservan intervalos de 30 días. Se muestran próximos vencimientos y número de cuotas vencidas automáticamente para fichas activas, sin crear pagos ficticios ni cargar pendientes a mano. Baja detiene la acumulación; reactivar abre un ciclo nuevo sin deuda por el período anterior. El historial se conserva y no se permite cobrar un pendiente de un ciclo anterior. Se pueden comenzar los nuevos períodos con inscripción o cuota. Los registros previos conservan su referencia de vencimiento.
+
+Borrado definitivo exclusivo de ADMIN para fichas, cuentas, ejercicios y turnos, con advertencia y limpieza transaccional de vínculos. Las fichas/cuentas/ejercicios deben darse de baja antes. Se bloquea eliminar responsables históricos o ejercicios usados en rutinas. Borrar una ficha también elimina sus pagos y datos clínicos; se advierte explícitamente. La baja lógica continúa siendo la opción normal.
+
+configuracion se conserva: guarda preferencias de apertura, cupo y días/entrenadores, más pequeños contadores usados para coordinar transacciones de agenda, cuentas y borrados. No es una segunda base de datos ni contiene credenciales. El detalle actualizado está en docs/PROTOTIPO.md.
+
+Verificación: 33 pruebas aisladas de backend aprobadas, compilación de frontend/backend; navegador con datos solo en memoria: agenda de 25 lugares, importación real de una planilla de 100 ejercicios con un duplicado y una fila inválida (100 cargados, 2 omitidos), menú de 390 px sin desborde e inscripción con vencimiento automático al 23/11 desde el 24/10. No se modificaron datos reales de Atlas durante las pruebas. El usuario autorizó commit y subida a GitHub en borrador-web.

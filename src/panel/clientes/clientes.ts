@@ -65,6 +65,10 @@ function mostrar(): void {
                     elemento('tarjeta-vinculo').scrollIntoView({ block: 'start' });
                 }));
         }
+        if (administrador && !cliente.activo) grupo.append(boton('Eliminar definitivamente', async () => {
+            if (!await confirmar('Se eliminarán para siempre la ficha de ' + nombreCompleto(cliente) + ', su historia clínica, rutinas, pagos y asignaciones. La cuenta web se conservará y quedará desvinculada. No podrás recuperar estos datos.', 'Eliminar cliente definitivamente')) return;
+            const r = await api('/api/eliminar', { entidad: 'clientes', id: cliente.id, confirmado: true }); cancelarEdicion(); await cargar(); avisar(r.mensaje, true);
+        }, true));
         return [nombreCompleto(cliente), cliente.dni, [cliente.telefono, cliente.email].filter(Boolean).join(' · ') || 'Sin contacto', cliente.activo ? 'Activo' : 'Inactivo', cliente.vinculado ? 'Vinculada' : 'Sin cuenta', grupo];
     }));
 }

@@ -248,3 +248,8 @@ td {
     background: white;
   }
 }
+
+/* Las tablas se desplazan dentro de su tarjeta, sin ensanchar la página móvil. */
+.lista-detalle { grid-template-columns: minmax(0, 1fr); min-width: 0; }
+.lista-detalle > *, .tabla-desplazable, fieldset { min-width: 0; }
+.tabla-desplazable { max-width: 100%; }

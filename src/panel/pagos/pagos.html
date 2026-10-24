@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="./pagos.css">
   </head>
   <body>
-    <div id="vista" hidden><section class="tarjeta"><h2>Cuotas a cobrar</h2><p class="ayuda">Esta lista se calcula automáticamente para las fichas activas del gimnasio. Las cuentas que solo se registraron en la web todavía no cuentan como inscriptas. El importe se define al registrar el cobro.</p><div id="pendientes-cobro"></div></section>
+    <div id="vista" hidden><section class="tarjeta"><h2>Calendario de cuotas</h2><p class="ayuda">Esta lista se calcula automáticamente para las fichas activas del gimnasio. Las cuentas que solo se registraron en la web todavía no cuentan como inscriptas. La inscripción inicia un ciclo de cuotas cada 30 días. Se muestra el próximo vencimiento y cuántas cuotas vencieron. La baja detiene el ciclo; al reactivar se empieza uno nuevo. El importe se define al cobrar.</p><div id="pendientes-cobro"></div></section>
       <section class="tarjeta">
         <h2>Registrar cobro o renovar cuota</h2>
         <form id="formulario-pago" class="formulario" novalidate>
@@ -28,7 +28,7 @@
           <input name="estado" type="hidden" value="PAGADO">
           <label class="campo">Fecha de registro / pago *<input name="fechaPago" type="date" required>
           </label>
-          <label class="campo">Vencimiento *<input name="fechaVencimiento" type="date" required>
+          <label class="campo">Vencimiento automático<input name="fechaVencimiento" type="date" readonly>
           </label>
           <label class="campo ancho">Observaciones<textarea name="observaciones" maxlength="2000" rows="3"></textarea>
           </label>
@@ -52,7 +52,7 @@
           </label>
           <button id="imprimir" class="boton secundario" type="button">Imprimir listado</button>
         </div>
-        <p class="ayuda">Una cuota cobrada puede figurar vencida cuando finalizó su vigencia. Renovar crea una cuota nueva y conserva el historial.</p>
+        <p class="ayuda">Cada cobro cubre la siguiente cuota del ciclo, aunque se pague tarde. Los vencimientos se calculan automáticamente y el historial se conserva.</p>
         <div id="listado">
         </div>
       </section>

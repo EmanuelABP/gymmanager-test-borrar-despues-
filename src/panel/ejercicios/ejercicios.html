@@ -30,6 +30,13 @@
           </div>
         </form>
       </section>
+      <section class="tarjeta" id="tarjeta-importacion" hidden>
+        <h2>Importar ejercicios desde Excel</h2>
+        <p class="ayuda">Primera hoja de un archivo .xlsx, con encabezados: código, nombre, grupo muscular y descripción. Hasta 1000 ejercicios por archivo (máximo 2 MB). Los códigos existentes se omiten; no se reemplazan.</p>
+        <label class="campo">Archivo Excel<input id="archivo-ejercicios" type="file" accept=".xlsx"></label>
+        <div class="acciones"><button id="plantilla-excel" class="boton secundario" type="button">Descargar plantilla</button><button id="importar-ejercicios" class="boton" type="button" disabled>Confirmar importación</button></div>
+        <p id="estado-importacion" role="status"></p><div id="vista-importacion"></div>
+      </section>
       <section class="tarjeta">
         <h2>Catálogo</h2>
         <label>Buscar por código, nombre o grupo muscular <input id="buscar" class="buscador" type="search" placeholder="Buscar ejercicio…">

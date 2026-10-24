@@ -78,7 +78,7 @@ export function memoria(inicial: Record<string, Document[]> = {}) {
         for (const [campo, valor] of Object.entries(cambio.$inc ?? {})) nuevo[campo] = (nuevo[campo] ?? 0) + Number(valor)
         for (const campo of Object.keys(cambio.$unset ?? {})) delete nuevo[campo]
         for (const [campo, valor] of Object.entries(cambio.$addToSet ?? {})) { nuevo[campo] ??= []; if (!nuevo[campo].some((v: any) => iguales(v, valor))) nuevo[campo].push(valor) }
-        for (const [campo, valor] of Object.entries(cambio.$pull ?? {})) nuevo[campo] = (nuevo[campo] ?? []).filter((v: any) => !iguales(v, valor))
+        for (const [campo, valor] of Object.entries(cambio.$pull ?? {})) nuevo[campo] = (nuevo[campo] ?? []).filter((v: any) => !(valor && typeof valor === 'object' && !(valor instanceof ObjectId) ? coincide(v, valor) : iguales(v, valor)))
         for (const [campo, valor] of Object.entries(cambio.$push ?? {})) { nuevo[campo] ??= []; nuevo[campo].push(valor) }
       }
       comprobarUnicos(nuevo, documento._id)

@@ -212,3 +212,12 @@
     padding: var(--espacio-pequeno);
   }
 }
+
+/* Menú distinguible también cuando pasa arriba en teléfonos. */
+.opcion-menu { border-color: var(--color-principal-claro); background: var(--color-superficie); }
+.opcion-menu[aria-current="page"] { border-color: var(--color-principal); box-shadow: inset 4px 0 var(--color-principal); }
+@media (max-width: 800px) {
+ .barra-lateral { background: var(--color-principal-claro); border-bottom: 2px solid var(--color-principal); }
+ .opcion-menu { border-color: var(--color-principal); justify-content: center; text-align: center; }
+ .opcion-menu[aria-current="page"] { color: white; background: var(--color-principal); }
+}

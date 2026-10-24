@@ -5,6 +5,10 @@ import type { ClienteListado, Personal, Turno } from '../../compartidos/modelos.
 const dias = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
 const formulario = elemento<HTMLFormElement>('formulario-turno');
 let turnos: Turno[] = [], personal: Personal[] = [];
+let administrador = false;
+const seleccionados = new Set<string>();
+let visiblesActuales: Turno[] = [];
+function contarSeleccion(): void { elemento('cantidad-seleccionados').textContent = seleccionados.size + ' seleccionados'; }
 const descripcion = (t: Turno) => t.dia + ' · ' + t.horaInicio + '–' + t.horaFin + ' · ' + t.entrenador;
 function limpiarEdicion(): void { formulario.reset(); (formulario.elements.namedItem('id') as HTMLInputElement).value = ''; elemento('titulo-turno').textContent = 'Crear turno semanal'; elemento('guardar-turno').textContent = 'Crear turno'; elemento('cancelar-turno').hidden = true; }
 function editar(turno: Turno): void {
@@ -19,10 +23,12 @@ function editar(turno: Turno): void {
     elemento<HTMLDetailsElement>('excepcion-turno').open = true;
     formulario.scrollIntoView({ block: 'start' });
 }
-function esPorHora(t: Turno): boolean { const minutos = (h: string) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3)); return minutos(t.horaFin) - minutos(t.horaInicio) === 60 && t.capacidad <= 5; }
+function esPorHora(t: Turno): boolean { const minutos = (h: string) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3)); return minutos(t.horaFin) - minutos(t.horaInicio) === 60; }
 function mostrar(): void {
     const filtroEntrenador = elemento<HTMLSelectElement>('filtro-entrenador').value, filtroDia = elemento<HTMLSelectElement>('filtro-dia').value, estado = elemento<HTMLSelectElement>('filtro-estado').value;
     const visibles = turnos.filter(t => (!filtroEntrenador || t.entrenadorId === filtroEntrenador) && (!filtroDia || t.dia === filtroDia) && (estado === 'todos' || t.activo === (estado === 'activos')));
+    visiblesActuales = visibles;
+    contarSeleccion();
     const lista = elemento('listado');
     lista.replaceChildren();
     if (!visibles.length) {
@@ -59,8 +65,14 @@ function mostrar(): void {
             const estado = nodo('span', t.activo ? 'Activo' : 'Inactivo', 'estado-etiqueta' + (t.activo ? '' : ' inactivo'));
             const horario = nodo('div', t.horaInicio + '–' + t.horaFin);
             if (!esPorHora(t))
-                horario.append(nodo('p', 'Bloque anterior: adaptá a una hora y un máximo de 5 clientes.', 'aviso-bloque'));
-            return [horario, cupo, clientes, estado, botones];
+                horario.append(nodo('p', 'Bloque anterior: adaptá a una hora.', 'aviso-bloque'));
+            if (administrador) {
+ const elegir = nodo('input'); elegir.type = 'checkbox'; elegir.checked = seleccionados.has(t._id);
+ elegir.setAttribute('aria-label', 'Seleccionar ' + descripcion(t));
+ elegir.addEventListener('change', () => { if (elegir.checked) seleccionados.add(t._id); else seleccionados.delete(t._id); contarSeleccion(); });
+ horario.prepend(elegir, document.createTextNode(' '));
+}
+return [horario, cupo, clientes, estado, botones];
         }));
         lista.append(bloque);
     }
@@ -71,6 +83,7 @@ async function cargar(): Promise<void> {
         }>('/api/turnos'), api<{
             clientes: ClienteListado[];
         }>('/api/clientes')]);
+    seleccionados.clear();
     turnos = r.turnos.sort((a, b) => dias.indexOf(a.dia) - dias.indexOf(b.dia) || a.horaInicio.localeCompare(b.horaInicio));
     opciones(elemento<HTMLSelectElement>('turnoId'), turnos.filter(t => t.activo && t.ocupacion < t.capacidad && esPorHora(t)).map(t => ({ valor: t._id, texto: descripcion(t) + ' · ' + (t.capacidad - t.ocupacion) + ' libres' })));
     opciones(elemento<HTMLSelectElement>('clienteId'), c.clientes.filter(c => c.activo).map(c => ({ valor: c.id, texto: nombreCompleto(c) })));
@@ -108,26 +121,25 @@ async function prepararAgenda(): Promise<void> {
     for (const f of c.franjas)
         agregarFranja(f.inicio, f.fin);
     (elemento<HTMLFormElement>('formulario-agenda').elements.namedItem('capacidad') as HTMLInputElement).value = String(c.capacidad);
-    for (const p of personal) {
-        const fila = nodo('fieldset', '', 'dias-entrenador');
-        fila.dataset.entrenador = p._id;
-        fila.append(nodo('legend', nombreCompleto(p)));
-        const marcados = c.trabajos.find(t => t.entrenadorId === p._id)?.dias ?? [];
-        for (const dia of dias) {
-            const etiqueta = nodo('label'), check = nodo('input');
-            check.type = 'checkbox';
-            check.value = dia;
-            check.checked = marcados.includes(dia);
-            etiqueta.append(check, document.createTextNode(dia));
-            fila.append(etiqueta);
-        }
-        elemento('dias-entrenadores').append(fila);
+    const diasElegidos = new Set(c.trabajos.flatMap(t => t.dias));
+    for (const dia of dias) {
+        const etiqueta = nodo('label'), check = nodo('input'); check.type = 'checkbox'; check.value = dia; check.checked = diasElegidos.has(dia);
+        etiqueta.append(check, document.createTextNode(dia)); elemento('dias-comunes').append(etiqueta);
     }
+    const contar = () => { elemento('cantidad-entrenadores').textContent = '(' + elemento('dias-entrenadores').querySelectorAll('input:checked').length + ')'; };
+    for (const p of personal) {
+        const etiqueta = nodo('label'), check = nodo('input'); check.type = 'checkbox'; check.value = p._id;
+        check.checked = c.trabajos.some(t => t.entrenadorId === p._id); check.addEventListener('change', contar);
+        etiqueta.append(check, document.createTextNode(nombreCompleto(p))); elemento('dias-entrenadores').append(etiqueta);
+    }
+    contar();
     if (!personal.length)
         elemento('dias-entrenadores').append(nodo('p', 'Primero creá una cuenta ENTRENADOR desde Cuentas.', 'ayuda'));
     manejarFormulario('formulario-agenda', async (datos) => {
         const franjas = [...elemento('franjas-apertura').children].map(f => ({ inicio: f.querySelector<HTMLInputElement>('[data-inicio]')!.value, fin: f.querySelector<HTMLInputElement>('[data-fin]')!.value }));
-        const trabajos = [...elemento('dias-entrenadores').querySelectorAll<HTMLElement>('[data-entrenador]')].map(f => ({ entrenadorId: f.dataset.entrenador, dias: [...f.querySelectorAll<HTMLInputElement>('input:checked')].map(c => c.value) })).filter(t => t.dias.length);
+        const diasMarcados = [...elemento('dias-comunes').querySelectorAll<HTMLInputElement>('input:checked')].map(c => c.value);
+        if (!diasMarcados.length) throw new ErrorAPI('Seleccioná al menos un día.');
+        const trabajos = [...elemento('dias-entrenadores').querySelectorAll<HTMLInputElement>('input:checked')].map(c => ({ entrenadorId: c.value, dias: diasMarcados }));
         if (!trabajos.length)
             throw new ErrorAPI('Marcá los días de al menos un entrenador.');
         if (!await confirmar('Se generarán turnos de una hora para los entrenadores y días seleccionados. Se conservarán las asignaciones existentes y no se eliminarán otros horarios.', 'Generar agenda semanal'))
@@ -149,8 +161,17 @@ async function iniciar(): Promise<void> {
     opciones(elemento<HTMLSelectElement>('filtro-entrenador'), personal.map(p => ({ valor: p._id, texto: nombreCompleto(p) })), 'Todos los entrenadores');
     if (usuario.rol === 'ENTRENADOR')
         elemento<HTMLSelectElement>('entrenadorId').value = usuario.id;
-    if (usuario.rol === 'ADMIN')
-        await prepararAgenda();
+    administrador = usuario.rol === 'ADMIN';
+    if (administrador) {
+        await prepararAgenda(); elemento('acciones-masivas').hidden = false;
+        elemento('seleccionar-visibles').addEventListener('click', () => {
+            const todos = visiblesActuales.every(t => seleccionados.has(t._id));
+            for (const t of visiblesActuales) { if (todos) seleccionados.delete(t._id); else seleccionados.add(t._id); }
+            mostrar();
+        });
+        elemento('baja-seleccion').addEventListener('click', () => void cambiarSeleccion(false).catch(avisar));
+        elemento('borrar-seleccion').addEventListener('click', () => void cambiarSeleccion(true).catch(avisar));
+    }
     manejarFormulario('formulario-turno', async (datos) => { const r = await api('/api/turnos', { ...datos, capacidad: Number(datos.capacidad) }); limpiarEdicion(); await cargar(); return r.mensaje; });
     manejarFormulario('formulario-asignacion', async (datos) => { const r = await api('/api/turnos/asignar', datos); await cargar(); return r.mensaje; });
     elemento('cancelar-turno').addEventListener('click', limpiarEdicion);
@@ -159,3 +180,14 @@ async function iniciar(): Promise<void> {
     await cargar();
 }
 void iniciar().catch(avisar);
+
+let cambiandoSeleccion = false;
+async function cambiarSeleccion(eliminar: boolean): Promise<void> {
+    if (cambiandoSeleccion) return;
+    if (!seleccionados.size) throw new ErrorAPI('Seleccioná uno o más turnos. Podés filtrar por entrenador y seleccionar todos los visibles.');
+    const ids = [...seleccionados];
+    if (!await confirmar(eliminar ? 'Vas a eliminar definitivamente ' + ids.length + ' turnos, sus asignaciones e historial. No podrás recuperarlos. Esta acción es irreversible.' : '¿Dar de baja ' + ids.length + ' turnos? Se conservará su historial y dejarán de aparecer en los perfiles.', eliminar ? 'Eliminar definitivamente' : 'Dar de baja turnos')) return;
+    cambiandoSeleccion = true;
+    try { const r = await api('/api/turnos/lote', { ids, eliminar, confirmado: true }); await cargar(); avisar(r.mensaje, true); }
+    finally { cambiandoSeleccion = false; }
+}
