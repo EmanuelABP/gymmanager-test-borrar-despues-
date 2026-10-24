@@ -2,6 +2,7 @@ import { createServer } from 'node:http'
 import { conectarDB, cerrarDB } from './db.ts'
 import { registrarUsuario } from './controladores/register.ts'
 import { iniciarSesion } from './controladores/login.ts'
+import { consultarSesion, cerrarSesion,} from './controladores/sesion.ts'
 
 const server = createServer((request, response) => {
   response.setHeader('Content-Type', 'application/json; charset=utf-8')
@@ -27,7 +28,23 @@ const server = createServer((request, response) => {
     void iniciarSesion(request, response)
     return
   }
+  // Consulta la sesión del navegador.
+  if (
+    request.method === 'GET' &&
+    request.url === '/api/usuarios/sesion'
+  ) {
+    void consultarSesion(request, response)
+    return
+  }
 
+  // Cierra la sesión actual.
+  if (
+    request.method === 'POST' &&
+    request.url === '/api/usuarios/logout'
+  ) {
+    void cerrarSesion(request, response)
+    return
+  }
   response.writeHead(404)
   response.end(JSON.stringify({ mensaje: 'Ruta no encontrada' }))
 })
