@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GymManager - Mi perfil</title>
+
+  <link rel="stylesheet" href="../../style.css">
+  <link rel="stylesheet" href="./perfil.css">
+</head>
+<body>
+  <header class="encabezado-principal">
+    <a class="marca" href="./perfil.html">GymManager</a>
+
+    <nav class="navegacion-perfil" aria-label="Opciones de la cuenta">
+      <span>Mi perfil · Cliente</span>
+      <button id="boton-cerrar-sesion" type="button" disabled>
+        Cerrar sesión
+      </button>
+    </nav>
+  </header>
+
+  <main class="pagina-perfil">
+    <p id="mensaje-perfil" class="mensaje-perfil" role="status"></p>
+
+    <section class="presentacion-cliente"
+      aria-labelledby="nombre-cliente">
+
+      <div id="iniciales-cliente" class="avatar-cliente"
+        aria-hidden="true"></div>
+
+      <div>
+        <h1 id="nombre-cliente">Mi perfil</h1>
+        <p id="correo-cliente"></p>
+      </div>
+    </section>
+
+    <p id="aviso-vinculacion" class="aviso-perfil" hidden>
+      Tu cuenta todavía no está vinculada a una ficha del gimnasio.
+      Consultá con administración para completar la vinculación.
+    </p>
+
+    <div class="contenido-perfil">
+      <section class="tarjeta-perfil tarjeta-rutina"
+        aria-labelledby="titulo-rutina">
+
+        <h2 id="titulo-rutina">Rutina vigente</h2>
+
+        <div id="contenido-rutina">
+          <p class="estado-vacio">
+            Tu rutina aparecerá acá cuando esté disponible.
+          </p>
+        </div>
+      </section>
+
+      <section class="tarjeta-perfil tarjeta-turno"
+        aria-labelledby="titulo-turno">
+
+        <h2 id="titulo-turno">Mi turno asignado</h2>
+
+        <div id="contenido-turno">
+          <p class="estado-vacio">
+            La información de tu turno aparecerá acá.
+          </p>
+        </div>
+      </section>
+
+      <section class="tarjeta-perfil tarjeta-historia"
+        aria-labelledby="titulo-historia">
+
+        <h2 id="titulo-historia">Historia clínica</h2>
+
+        <p>
+          Podés registrar antecedentes y lesiones relevantes
+          para tu entrenamiento. Completarla es opcional.
+        </p>
+
+        <button id="boton-historia-clinica" type="button" disabled>
+          Ver / editar
+        </button>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="./perfil.ts"></script>
+</body>
+</html>

@@ -12,6 +12,15 @@ Proyecto web de gestión de gimnasio desarrollado como parte del Trabajo Final I
 - Registrar únicamente pasos confirmados por el usuario o comprobados en los archivos. Las propuestas y tareas pendientes no deben figurar como completadas.
 - Leer este acuerdo antes de continuar el trabajo en futuras sesiones.
 
+## Pendientes de navegación por rol
+
+- [ ] Al abrir login o registro, consultar la sesión en el backend. Si está vigente, redirigir según el rol: USUARIO al perfil de cliente, ADMIN al panel administrativo y ENTRENADOR a su inicio dentro del panel de personal con los permisos correspondientes.
+- [ ] Aplicar la misma elección de destino después de un login exitoso y desde la entrada principal de la web.
+- [ ] Definir y crear los destinos antes de activar sus redirecciones. Usar una función compartida para evitar repetir la selección de rutas.
+- [ ] Probar sesión ausente, vigente y vencida; comprobar que no haya bucles y que un fallo de red no se trate como sesión cerrada.
+
+Cuando estas tareas estén implementadas y verificadas, quitar este bloque de pendientes y registrar el resultado en la bitácora. El registro todavía no inicia sesión automáticamente; ese cambio es una decisión aparte.
+
 ## Tecnologías del frontend
 
 - HTML para la estructura.
@@ -392,3 +401,76 @@ Siguiente secuencia propuesta: consulta y validación de sesión + cierre de ses
 Se revisó la implementación actual: el login guarda tokenHash y fechaVencimiento en sesiones, establece la cookie gymmanager_sesion y todavía no tiene rutas de consulta ni cierre.
 
 Se entrega por el chat la propuesta de `backend/src/controladores/sesion.ts`, con un helper reutilizable para recuperar al usuario autenticado, consulta GET de sesión y cierre POST. La consulta deberá comprobar token, vencimiento, usuario activo y rol válido, devolviendo únicamente datos básicos. El cierre eliminará solo la sesión actual y expirará la cookie; se enviará como JSON para evitar solicitudes de formulario convencionales. No se modificaron los archivos del backend ni se ejecutaron cierres reales. Las rutas siguen pendientes hasta que el usuario incorpore el código.
+
+### 23. Revisión de consulta y cierre de sesión
+
+A pedido del usuario, se revisaron los archivos incorporados: controlador sesion.ts, importación y rutas del servidor, y compatibilidad con los nombres de cookie y campos usados por login.ts.
+
+Verificaciones realizadas:
+
+- TypeScript del backend (`npm run check`) y del frontend (`tsc --noEmit`): sin errores.
+- Consulta real al servidor a través de Vite, sin cookies: `/api/salud` respondió 200 y `/api/usuarios/sesion` respondió 401 con el mensaje esperado.
+- Pruebas aisladas con base de datos simulada: sesión vigente, cookie ausente o malformada, vencimiento, usuario inactivo, rol inválido, error de base y exclusión de datos privados de la respuesta.
+- Cierre probado con una base simulada: elimina solo el hash correspondiente al token actual, expira la cookie y rechaza solicitudes que no tengan el tipo de contenido esperado.
+
+Todas estas comprobaciones finalizaron correctamente. No se cerró la sesión real del usuario ni se modificaron datos de Atlas. No se hizo una prueba real de consulta con la cookie autenticada del navegador del usuario ni un cierre real contra Atlas. El código del proyecto se mantuvo sin cambios durante esta revisión, salvo esta bitácora.
+
+### 24. Propuesta del módulo compartido de sesión del frontend
+
+Se entrega por el chat `src/compartidos/sesion.ts` para centralizar el tipo de usuario autenticado, la consulta de sesión al backend, el requisito de sesión para páginas privadas y el cierre con redirección al login. La consulta devuelve null únicamente ante 401; los fallos de red, del servidor o de formato se propagan como errores para no confundirlos con una sesión cerrada.
+
+El módulo no guarda contraseñas ni tokens en localStorage y no lee la cookie HttpOnly. La información del usuario se obtiene del backend en cada consulta. La redirección al perfil del cliente o panel del personal se añadirá cuando existan esas páginas. El archivo sigue pendiente de ser incorporado por el usuario; el asistente no modificó código del proyecto en este paso.
+
+
+### 25. Módulo de sesión incorporado y preparación del perfil
+
+Se verificó que el usuario incorporó `src/compartidos/sesion.ts` con consulta, requisito y cierre de sesión. La integración de estas funciones en cada pantalla sigue pendiente.
+
+El usuario pidió recordar la redirección automática de login y registro cuando exista una sesión vigente. Se añadió al inicio del README una lista activa de pendientes de navegación por rol, con la instrucción de quitarla al completar y verificar las tareas. Se propone activarla cuando existan los destinos para no enviar a páginas inexistentes.
+
+Se propone comenzar el perfil del cliente en `src/cliente/perfil/`, con HTML, CSS y TypeScript separados, usando el mockup como referencia. No se crearon todavía estos archivos. Debe contemplar los estados de cuenta sin ficha vinculada y sin datos asignados; los datos reales se cargarán desde las rutas autorizadas del backend a medida que se implementen los módulos.
+
+### 26. Perfil HTML incorporado; conexión de la navegación propuesta
+
+Se verificó que el usuario incorporó `src/cliente/perfil/perfil.html`; `perfil.ts` todavía está vacío y el login conserva el comentario de redirección pendiente.
+
+Se propone por el chat agregar la consulta de sesión al terminar el login y redirigir al perfil únicamente al rol USUARIO, cuyo destino ya existe. Los destinos ADMIN y ENTRENADOR y la redirección al entrar a login/registro continúan pendientes. También se entrega el TypeScript inicial del perfil para comprobar la sesión, restringir la vista al rol USUARIO, mostrar datos básicos reales y conectar el cierre de sesión. Estos cambios todavía no se consideran incorporados ni probados.
+
+### 27. Flujo de perfil confirmado y propuesta de alta automática de clientes
+
+El usuario confirmó que el flujo de login, redirección al perfil y sesión funciona tras incorporar el código propuesto. Antes de nuevas modificaciones de navegación, revisar los archivos para verificar qué pendientes por rol quedaron efectivamente resueltos.
+
+El usuario plantea crear una ficha de cliente automáticamente al registrarse y permitir a administración resolver fichas anteriores, con la intención de que personas interesadas conozcan el gimnasio y soliciten turnos desde la web. Se registra como propuesta de producto todavía no implementada ni cerrada.
+
+Se revisó `database/crear_colecciones.js` dentro del ZIP: el validador documentado de clientes requiere nombre, apellido, dni, activo, fechaCreacion y fechaModificacion. El formulario actual no solicita DNI. Verificar el validador real de Atlas antes de modificar el alta.
+
+Criterios propuestos: crear y vincular una ficha nueva solo si no hay una anterior; si existe coincidencia, mantener la cuenta pendiente de vinculación verificada por administración. Conservar el identificador e historial de la ficha existente (rutinas, historia clínica, pagos y turnos), evitando reemplazarla o sobrescribirla. Una coincidencia de DNI o correo no basta por sí sola para autorizar acceso al historial de otra ficha.
+
+Distinguir el alta de una cuenta/interesado de la condición de socio activo para no alterar los indicadores del gimnasio. Las reservas o solicitudes de turnos iniciadas por el cliente son una ampliación del MVP documentado, donde ADMIN/ENTRENADOR asignan los turnos. Definir y aprobar ese flujo antes de implementarlo. No se modificaron código ni datos de la base en este paso.
+
+### 28. Alcance del MVP confirmado: gestión por el personal
+
+Después de revisar la propuesta del avance 27, el usuario decidió mantener el flujo actual. El MVP prioriza la comodidad del dueño y los entrenadores para administrar a los clientes del gimnasio.
+
+Decisión vigente:
+
+- El registro público crea una cuenta de usuario, sin crear automáticamente una ficha en clientes ni considerar a la persona un socio activo.
+- Administración da de alta las fichas y vincula las cuentas existentes mediante un proceso verificado, que todavía debe implementarse.
+- Administradores y entrenadores asignan los turnos según los permisos del proyecto; el cliente consulta los que tiene asignados.
+- El perfil debe contemplar una cuenta sin ficha vinculada, sin inventar rutinas ni turnos.
+
+La propuesta del avance 27 no se adopta para el MVP. El alta automática de fichas, la admisión de interesados y las solicitudes o reservas de turnos por el cliente quedan como posibles mejoras futuras, sin compromiso de implementación para esta entrega. No se requieren cambios en el registro actual por esta decisión.
+
+### 29. CSS del perfil incorporado y preparación de una ficha de prueba
+
+Se verificó que el usuario incorporó `perfil.css` y el TypeScript de comprobación de sesión, datos básicos y cierre de sesión del perfil.
+
+El usuario propone crear manualmente un cliente en MongoDB y vincularlo a una cuenta existente para probar el flujo mientras no existe la administración. La vinculación requiere referencias ObjectId en ambos sentidos: usuarios.clienteId apunta a clientes._id y clientes.usuarioId apunta a usuarios._id. Antes de crear una ficha, comprobar que la cuenta no esté vinculada y que no exista ya una ficha correspondiente, para evitar duplicados y conservar historiales.
+
+La prueba todavía no se realizó. Actualmente perfil.ts obtiene nombre y correo desde la sesión y únicamente usa clienteId para mostrar u ocultar el aviso de vinculación; todavía no consulta rutinas, turnos ni historia clínica del cliente. Asociar una ficha permitirá comprobar el vínculo, pero no cargará esos módulos automáticamente. El siguiente desarrollo para ello será un endpoint de perfil propio que compruebe sesión, rol y titularidad.
+
+### 30. Prueba manual postergada; siguiente módulo propuesto
+
+El usuario decidió no crear ni vincular clientes manualmente en MongoDB. La prueba se realizará desde la web cuando esté implementada la gestión administrativa. El avance 29 queda como una preparación que no se ejecutó, no como una tarea de carga manual pendiente de realizar ahora.
+
+Se recomienda continuar por el panel administrativo y el módulo de clientes: alta de ficha, listado, vinculación verificada con una cuenta y consulta del perfil. Después se podrá implementar la historia clínica sobre una ficha real, comprobando permisos y titularidad. No se han creado archivos del panel ni se han modificado datos de Atlas en este paso.

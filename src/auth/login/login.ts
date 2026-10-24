@@ -1,3 +1,4 @@
+import { obtenerSesion } from '../../compartidos/sesion.ts'
 // 1. Obtenemos los elementos del HTML.
 const formulario = document.querySelector<HTMLFormElement>(
   '#formulario-login'
@@ -176,8 +177,20 @@ formulario.addEventListener('submit', async (evento) => {
     // Quitamos la contraseña de la pantalla después de ingresar.
     campoContrasena.value = ''
 
-    // Agregaremos la redirección cuando exista la página de destino.
-    // La sesión se administrará desde el backend mediante una cookie.
+    // Consultamos la sesión para conocer el rol real.
+    const usuario = await obtenerSesion()
+
+    if (!usuario) {
+    mensaje.dataset.estado = 'error'
+    mensaje.textContent = 'No pudimos confirmar tu sesión. Intentá nuevamente.'
+    return
+    }
+
+    if (usuario.rol === 'USUARIO') {
+    window.location.replace('/src/cliente/perfil/perfil.html')
+    }
+
+// Agregaremos los destinos de ADMIN y ENTRENADOR cuando existan.
   } catch {
     mensaje.dataset.estado = 'error'
     mensaje.textContent =

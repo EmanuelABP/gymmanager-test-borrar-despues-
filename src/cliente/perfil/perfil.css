@@ -1,0 +1,222 @@
+/* Respeta los elementos que TypeScript oculta mientras verifica la sesión. */
+[hidden] {
+  display: none !important;
+}
+
+/* Encabezado */
+.encabezado-principal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--espacio-mediano);
+  padding: var(--espacio-grande) var(--espacio-extra-grande);
+  background-color: var(--color-superficie);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.marca {
+  color: var(--color-principal);
+  font-family: var(--fuente-titulos);
+  font-size: var(--texto-subtitulo);
+  font-weight: var(--peso-negrita);
+  text-decoration: none;
+}
+
+.navegacion-perfil {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--espacio-grande);
+  color: var(--color-texto-secundario);
+  font-size: var(--texto-pequeno);
+}
+
+/* Contenido principal */
+.pagina-perfil {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--espacio-extra-grande);
+}
+
+.mensaje-perfil {
+  margin: 0 0 var(--espacio-grande);
+  color: var(--color-texto);
+  overflow-wrap: anywhere;
+}
+
+.mensaje-perfil:empty {
+  display: none;
+}
+
+/* Presentación del cliente */
+.presentacion-cliente {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-grande);
+  margin-bottom: var(--espacio-extra-grande);
+}
+
+.presentacion-cliente > div {
+  min-width: 0;
+}
+
+.avatar-cliente {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 76px;
+  height: 76px;
+  border: 1px solid var(--color-principal);
+  border-radius: 50%;
+  color: var(--color-principal);
+  background-color: var(--color-principal-claro);
+  font-size: var(--texto-subtitulo);
+  font-weight: var(--peso-negrita);
+}
+
+#nombre-cliente {
+  font-size: var(--texto-titulo);
+  overflow-wrap: anywhere;
+}
+
+#correo-cliente {
+  margin: var(--espacio-pequeno) 0 0;
+  color: var(--color-texto-secundario);
+  overflow-wrap: anywhere;
+}
+
+/* Aviso de cuenta sin ficha vinculada */
+.aviso-perfil {
+  margin: 0 0 var(--espacio-extra-grande);
+  padding: var(--espacio-mediano) var(--espacio-grande);
+  border-left: 4px solid var(--color-principal);
+  border-radius: var(--radio-pequeno);
+  color: var(--color-texto);
+  background-color: var(--color-principal-claro);
+}
+
+/* Distribución similar al mockup:
+   rutina a la izquierda, turno e historia clínica a la derecha. */
+.contenido-perfil {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    "rutina turno"
+    "rutina historia";
+  gap: var(--espacio-grande);
+  align-items: stretch;
+}
+
+.tarjeta-rutina {
+  grid-area: rutina;
+}
+
+.tarjeta-turno {
+  grid-area: turno;
+}
+
+.tarjeta-historia {
+  grid-area: historia;
+}
+
+/* Tarjetas */
+.tarjeta-perfil {
+  min-width: 0;
+  padding: var(--espacio-grande);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-mediano);
+  background-color: var(--color-superficie);
+  box-shadow: var(--sombra-tarjeta);
+  overflow-wrap: anywhere;
+}
+
+.tarjeta-perfil h2 {
+  margin-bottom: var(--espacio-grande);
+  color: var(--color-texto);
+}
+
+.tarjeta-perfil p {
+  margin: 0 0 var(--espacio-mediano);
+}
+
+.tarjeta-perfil p:last-child {
+  margin-bottom: 0;
+}
+
+.estado-vacio {
+  color: var(--color-texto-secundario);
+}
+
+/* Botones de esta pantalla */
+#boton-cerrar-sesion,
+#boton-historia-clinica {
+  min-height: 44px;
+  padding: var(--espacio-pequeno) var(--espacio-mediano);
+  border: 1px solid var(--color-principal);
+  border-radius: var(--radio-pequeno);
+  font-weight: var(--peso-medio);
+  transition:
+    color var(--transicion-rapida),
+    background-color var(--transicion-rapida);
+}
+
+#boton-cerrar-sesion {
+  color: var(--color-principal);
+  background-color: var(--color-superficie);
+}
+
+#boton-cerrar-sesion:hover:not(:disabled) {
+  background-color: var(--color-principal-claro);
+}
+
+#boton-historia-clinica {
+  color: var(--color-secundario);
+  background-color: var(--color-principal);
+}
+
+#boton-historia-clinica:hover:not(:disabled) {
+  background-color: var(--color-principal-hover);
+}
+
+#boton-cerrar-sesion:disabled,
+#boton-historia-clinica:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Adaptación a celulares */
+@media (max-width: 700px) {
+  .encabezado-principal,
+  .pagina-perfil {
+    padding: var(--espacio-grande);
+  }
+
+  .contenido-perfil {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "rutina"
+      "turno"
+      "historia";
+  }
+}
+
+@media (max-width: 400px) {
+  .presentacion-cliente {
+    align-items: flex-start;
+    gap: var(--espacio-mediano);
+  }
+
+  .avatar-cliente {
+    width: 56px;
+    height: 56px;
+  }
+
+  .navegacion-perfil {
+    width: 100%;
+    justify-content: space-between;
+    gap: var(--espacio-pequeno);
+  }
+}
