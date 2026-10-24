@@ -358,3 +358,11 @@ En `register.ts` se incorporaron:
 - Estilo de éxito separado del error; bloqueo temporal de edición mientras se procesa el envío para mantener consistente la respuesta con los datos enviados.
 
 Verificación: TypeScript del frontend sin errores; comprobación en el navegador de campos vacíos, correo inválido, contraseñas diferentes y retiro del borde rojo al corregir. Se comprobaron localmente, con respuestas simuladas, el correo duplicado y el error general del servidor. No se hicieron registros reales ni cambios en Atlas durante estas pruebas. El login todavía no se creó.
+
+### 19. Pantalla de login y propuesta de funcionamiento
+
+Se verificó que el usuario creó `src/auth/login/login.html`, `login.css` y el TypeScript inicial. El HTML reutiliza los estilos globales y `auth.css`; el usuario confirmó que la pantalla se ve bien.
+
+A pedido del usuario, se entrega por el chat el TypeScript del login con validaciones en español, indicadores por campo y una solicitud prevista a `POST /api/usuarios/login`. El usuario lo incorporará antes de trabajar sobre el backend. No se considera implementado ni probado todavía el acceso real.
+
+El backend deberá verificar la contraseña con bcrypt, comprobar que la cuenta esté activa y establecer una sesión mediante una cookie HttpOnly. El frontend no guardará contraseñas ni simulará autenticación en localStorage. La comprobación de una sesión existente y la redirección se completarán junto con el backend; no redirigir a la raíz mientras main.ts todavía envíe al registro.

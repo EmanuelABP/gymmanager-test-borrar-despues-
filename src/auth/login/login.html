@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GymManager - Iniciar sesión</title>
+
+  <link rel="stylesheet" href="../../style.css">
+  <link rel="stylesheet" href="../auth.css">
+  <link rel="stylesheet" href="./login.css">
+</head>
+<body>
+  <main class="pagina-auth pagina-login">
+    <section class="tarjeta-auth tarjeta-login"
+      aria-labelledby="titulo-login">
+
+      <h1 class="nombre-aplicacion">GymManager</h1>
+      <h2 id="titulo-login" class="titulo-auth">Iniciar sesión</h2>
+
+      <form id="formulario-login" class="formulario-auth"
+        method="post" novalidate>
+
+        <div class="campo-formulario">
+          <label for="correo">Correo electrónico</label>
+          <input type="email" id="correo" name="correo"
+            autocomplete="username"
+            placeholder="ejemplo@correo.com" required>
+        </div>
+
+        <div class="campo-formulario">
+          <label for="contrasena">Contraseña</label>
+          <input type="password" id="contrasena" name="contrasena"
+            autocomplete="current-password"
+            placeholder="Ingresá tu contraseña" required>
+        </div>
+
+        <p id="mensaje-login" class="mensaje-formulario"
+          role="status"></p>
+
+        <button type="submit" class="boton-auth">
+          Ingresar
+        </button>
+      </form>
+
+      <p class="pie-auth">
+        ¿No tenés cuenta?
+        <a href="../register/register.html">Registrate</a>
+      </p>
+    </section>
+  </main>
+
+  <script type="module" src="./login.ts"></script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 import { createServer } from 'node:http'
 import { conectarDB, cerrarDB } from './db.ts'
-import { registrarUsuario } from './controladores/registro.ts'
+import { registrarUsuario } from './controladores/register.ts'
 
 const server = createServer((request, response) => {
   response.setHeader('Content-Type', 'application/json; charset=utf-8')
