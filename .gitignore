@@ -1,27 +1,24 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Variables de entorno
+**/.env
+**/.env.*
+!**/.env.example
 
-node_modules
-dist
-dist-ssr
-*.local
-.env
-.env.*
-!.env.example
+# Frontend
+**/node_modules/
+**/dist/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Backend Java
+**/target/
+**/.gradle/
+**/build/
+
+# Configuraciones del IDE
+.idea/
+.vscode/
+
+# Archivos del sistema
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+
+# Logs
+*.log
