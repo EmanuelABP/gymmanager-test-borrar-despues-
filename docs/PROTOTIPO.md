@@ -162,3 +162,9 @@ La baja retira al cliente del calendario. La reactivación abre un nuevo ciclo m
 ### Borrado definitivo
 
 Es una última opción de ADMIN, con advertencia irreversible. Clientes, cuentas y ejercicios deben estar inactivos primero. Borrar un cliente elimina ficha, datos clínicos, rutinas, pagos y movimientos del turno; la cuenta se conserva desvinculada. Borrar una cuenta elimina sus sesiones y desvincula la ficha, sin borrar la ficha. Cuentas responsables de turnos, rutinas o pagos, y ejercicios referenciados por rutinas, no pueden borrarse: se explica por qué y se mantiene la baja lógica. No se ejecutaron borrados sobre Atlas durante las pruebas.
+
+## Impresión de rutina uniforme
+
+El perfil del cliente y el panel de personal preparan la misma hoja imprimible independiente de sus pantallas. Incluye GymManager en azul, cliente, fecha, observaciones y tabla de la rutina vigente. Se usa con Imprimir o Ctrl+P. No incluye datos de contacto, historia clínica, turnos, editores ni historial de rutinas.
+
+La hoja solicita A4 vertical y márgenes propios. Una rutina larga continúa en otras páginas con encabezados de tabla repetidos; las filas intentan mantenerse juntas. El usuario puede guardar como PDF desde su navegador. Las opciones de impresora, escala, encabezados/pies y otras preferencias del navegador pueden modificar el resultado final. La compilación fue verificada; la vista previa real queda pendiente porque la herramienta de automatización no pudo controlar Firefox en Windows.

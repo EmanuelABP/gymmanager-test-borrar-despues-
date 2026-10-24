@@ -1,6 +1,7 @@
 import { prepararPanel } from '../../panel/estructura.ts';
 import { api, elemento, nodo, enlace, avisar, fecha } from '../../compartidos/api.ts';
 import { dibujarRutina } from '../../compartidos/rutinas.ts';
+import { prepararImpresionRutina } from '../../compartidos/impresion-rutina.ts';
 import type { Ficha, Turno } from '../../compartidos/modelos.ts';
 async function iniciar(): Promise<void> {
     const usuario = await prepararPanel('Mi perfil', ['USUARIO']);
@@ -23,6 +24,7 @@ async function iniciar(): Promise<void> {
     elemento('estado-ficha').textContent = cliente.activo ? 'Cliente desde ' + fecha(cliente.fechaCreacion) : 'Tu ficha está inactiva. Podés consultar tu información; contactá con administración para reactivarla.';
     const vigente = cliente.rutinas.find(r => r.activo);
     dibujarRutina(elemento('rutina'), vigente);
+    prepararImpresionRutina(cliente, vigente);
     elemento('imprimir').hidden = !vigente;
     elemento('imprimir').addEventListener('click', () => window.print());
     const lista = elemento('turnos');

@@ -1,6 +1,7 @@
 import { prepararPanel } from '../estructura.ts';
 import { api, elemento, manejarFormulario, opciones, nodo, boton, acciones, avisar, fecha, nombreCompleto, ErrorAPI } from '../../compartidos/api.ts';
 import { dibujarRutina } from '../../compartidos/rutinas.ts';
+import { prepararImpresionRutina } from '../../compartidos/impresion-rutina.ts';
 import type { ClienteListado, Personal, Ejercicio, Ficha, Rutina, EjercicioRutina } from '../../compartidos/modelos.ts';
 let catalogo: Ejercicio[] = [];
 let ficha: Ficha | undefined;
@@ -82,6 +83,8 @@ function editarRutina(rutina: Rutina): void {
     elemento('editor-rutina').scrollIntoView({ block: 'start' });
 }
 async function cargarFicha(): Promise<void> {
+    prepararImpresionRutina();
+    elemento<HTMLButtonElement>('imprimir').disabled = true;
     const id = elemento<HTMLSelectElement>('clienteId').value;
     elemento('historial').replaceChildren();
     elemento('editor-rutina').hidden = true;
@@ -97,6 +100,8 @@ async function cargarFicha(): Promise<void> {
     if (!entrenadores.length)
         elemento('estado-cliente').textContent += ' Creá o habilitá una cuenta ENTRENADOR para asignar rutinas.';
     const historial = elemento('historial'), vigente = ficha.rutinas.find(r => r.activo);
+    prepararImpresionRutina(ficha, vigente);
+    elemento<HTMLButtonElement>('imprimir').disabled = !vigente;
     const actual = nodo('article', '', 'rutina-vigente');
     actual.append(nodo('h3', 'Rutina vigente'));
     const contenido = nodo('div');

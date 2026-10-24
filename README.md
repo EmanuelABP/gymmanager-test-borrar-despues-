@@ -583,3 +583,11 @@ Borrado definitivo exclusivo de ADMIN para fichas, cuentas, ejercicios y turnos,
 configuracion se conserva: guarda preferencias de apertura, cupo y días/entrenadores, más pequeños contadores usados para coordinar transacciones de agenda, cuentas y borrados. No es una segunda base de datos ni contiene credenciales. El detalle actualizado está en docs/PROTOTIPO.md.
 
 Verificación: 33 pruebas aisladas de backend aprobadas, compilación de frontend/backend; navegador con datos solo en memoria: agenda de 25 lugares, importación real de una planilla de 100 ejercicios con un duplicado y una fila inválida (100 cargados, 2 omitidos), menú de 390 px sin desborde e inscripción con vencimiento automático al 23/11 desde el 24/10. No se modificaron datos reales de Atlas durante las pruebas. El usuario autorizó commit y subida a GitHub en borrador-web.
+
+### 39. Plantilla compartida para imprimir rutinas
+
+Se separó el documento de impresión de la pantalla del perfil y del panel de rutinas. USUARIO, ENTRENADOR y ADMIN usan ahora el mismo componente y CSS: hoja A4 vertical, marca GymManager azul, nombre del cliente, fecha de asignación, indicaciones generales y tabla con ejercicios numerados, series, repeticiones, peso, descanso e indicaciones. No imprime menús, perfil, turnos, historia clínica, formularios ni rutinas anteriores.
+
+El documento se prepara con la rutina vigente ya cargada y funciona tanto con el botón como con Ctrl+P. El botón del panel permanece deshabilitado si no hay rutina vigente. La tabla aprovecha todo el ancho imprimible, repite su encabezado al continuar y procura no cortar un ejercicio entre páginas. Las rutinas largas pueden necesitar varias hojas; no se reduce todo a un tamaño ilegible para forzar una sola página. Los encabezados y pies añadidos por el navegador se desactivan desde su diálogo de impresión, si se desea.
+
+Verificación: compilación de Vite/TypeScript aprobada. Se preparó una prueba con datos ficticios sin Atlas, pero la herramienta de control de Firefox en Windows detuvo la comprobación por falta de compatibilidad con su política de URLs. No se verificó la paginación real en la vista previa. Pendiente: comprobar impresión en usuario y personal con una rutina corta y otra larga, usando el mismo tamaño de papel y escala. No se realizaron escrituras de prueba en Atlas.
