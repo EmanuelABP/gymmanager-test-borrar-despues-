@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "npm --prefix backend test",
+    "test": "npm --prefix ../backend test",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview"

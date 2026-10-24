@@ -22,3 +22,7 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Archivos locales y configuración privada heredada
+**/atlas-local.properties
+*.tsbuildinfo
