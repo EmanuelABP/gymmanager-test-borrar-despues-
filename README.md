@@ -299,3 +299,17 @@ Si se agregó el script de Google a `register.html`, retirarlo mientras no se ut
 Se verificó que el usuario incorporó en `register.ts` la selección tipada del formulario, la comprobación de su existencia y el evento `submit` con `preventDefault()`. También se verificó que retiró el script de Google del HTML.
 
 El siguiente paso propuesto por el chat es leer los campos con FormData, comprobar datos vacíos y coincidencia de contraseñas, y mostrar errores mediante el elemento `mensaje-registro`. Estas validaciones y el envío al backend todavía no se consideran implementados.
+
+### 13. Navegación inicial y validaciones en español
+
+Se verificó que `main.ts` redirige temporalmente a la página HTML del registro y que el usuario agregó `novalidate` al formulario para reemplazar los carteles nativos del navegador por mensajes propios en español.
+
+En `register.ts` ya están implementadas la lectura de campos mediante FormData, la comprobación de campos vacíos o con solo espacios y la coincidencia de contraseñas. La validación del formato del correo se propone como siguiente paso; el envío al backend sigue pendiente. La comprobación de correos duplicados debe resolverse en el backend, respetando el índice único de email.
+
+### 14. Revisión del TypeScript y próximos pasos del registro
+
+Se verificó que el usuario agregó la validación básica del formato de correo en `register.ts`. El archivo actual comprueba campos vacíos, coincidencia de contraseñas y formato de correo. El backend sigue ofreciendo únicamente `GET /api/salud`: todavía no hay un endpoint para crear cuentas ni para comprobar una sesión.
+
+El usuario pidió una versión completa y comentada del TypeScript. Se propone consolidar las validaciones actuales, mensajes específicos por campo y, como regla inicial pendiente de incorporar y acordar con el backend, un mínimo de ocho caracteres para la contraseña. No marcar el registro como exitoso antes de que el servidor confirme la creación real.
+
+La comprobación de sesión se centralizará más adelante en un módulo compartido, cuando se implemente la autenticación. No depende de tener diseñada la página principal, pero necesita una sesión verificable por el backend y un destino de navegación definido. No considerar que un usuario está autenticado solamente porque existe un valor en localStorage.
