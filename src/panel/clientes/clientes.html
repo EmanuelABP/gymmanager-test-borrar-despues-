@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GymManager - Clientes</title>
+
+  <link rel="stylesheet" href="../../style.css">
+  <link rel="stylesheet" href="../panel.css">
+  <link rel="stylesheet" href="./clientes.css">
+</head>
+<body>
+  <div class="estructura-panel">
+    <aside class="barra-lateral">
+      <a class="marca-panel" href="../inicio/inicio.html">GymManager</a>
+
+      <nav class="menu-panel" aria-label="Menú de gestión">
+        <a href="../inicio/inicio.html" class="opcion-menu">Inicio</a>
+        <a href="./clientes.html" class="opcion-menu" aria-current="page">
+          Clientes
+        </a>
+
+        <button class="opcion-menu" type="button" disabled>Ejercicios</button>
+        <button class="opcion-menu" type="button" disabled>Rutinas</button>
+        <button class="opcion-menu" type="button" disabled>Turnos</button>
+        <button class="opcion-menu" type="button" data-solo-admin hidden disabled>
+          Pagos
+        </button>
+      </nav>
+
+      <button id="boton-cerrar-sesion" class="boton-cerrar-sesion"
+        type="button" disabled>
+        Cerrar sesión
+      </button>
+    </aside>
+
+    <div class="zona-principal">
+      <header class="encabezado-panel">
+        <div>
+          <h1>Clientes</h1>
+          <p>Consultá las fichas del gimnasio.</p>
+        </div>
+
+        <div class="cuenta-panel">
+          <span id="nombre-personal"></span>
+          <span id="rol-personal" class="etiqueta-rol"></span>
+        </div>
+      </header>
+
+      <main class="contenido-panel">
+        <p id="mensaje-panel" class="mensaje-panel" role="status">
+          Comprobando tu sesión…
+        </p>
+
+        <div id="modulo-clientes" hidden>
+          <section id="seccion-alta" class="tarjeta-clientes" hidden>
+            <h2>Nuevo cliente</h2>
+
+            <form id="formulario-cliente" novalidate>
+              <fieldset class="campos-cliente">
+                <legend>Datos de la ficha</legend>
+
+                <div class="campo-cliente">
+                  <label for="nombre-cliente">Nombre *</label>
+                  <input id="nombre-cliente" name="nombre"
+                    type="text" maxlength="100" required>
+                </div>
+
+                <div class="campo-cliente">
+                  <label for="apellido-cliente">Apellido *</label>
+                  <input id="apellido-cliente" name="apellido"
+                    type="text" maxlength="100" required>
+                </div>
+
+                <div class="campo-cliente">
+                  <label for="dni-cliente">DNI *</label>
+                  <input id="dni-cliente" name="dni"
+                    type="text" inputmode="numeric" maxlength="20" required>
+                </div>
+
+                <div class="campo-cliente">
+                  <label for="telefono-cliente">Teléfono</label>
+                  <input id="telefono-cliente" name="telefono"
+                    type="tel" maxlength="30">
+                </div>
+
+                <div class="campo-cliente">
+                  <label for="email-cliente">Correo de contacto</label>
+                  <input id="email-cliente" name="email"
+                    type="email" maxlength="254">
+                </div>
+
+                <p class="ayuda-cliente">
+                  Los campos con * son obligatorios.
+                  La ficha puede crearse sin una cuenta de usuario.
+                </p>
+
+                <p id="mensaje-alta" class="mensaje-clientes" role="status"></p>
+
+                <button class="boton-clientes" type="submit">
+                  Crear cliente
+                </button>
+              </fieldset>
+            </form>
+          </section>
+
+          <section id="seccion-vinculo" class="tarjeta-clientes" hidden>
+            <h2>Vincular cuenta registrada</h2>
+            <p id="cliente-elegido"></p>
+
+            <form id="formulario-vinculo" novalidate>
+              <fieldset class="campos-cliente">
+                <legend>Cuenta del cliente</legend>
+
+                <input name="clienteId" type="hidden">
+
+                <div class="campo-cliente">
+                  <label for="correo-cuenta">Correo de la cuenta</label>
+                  <input id="correo-cuenta" name="correoCuenta"
+                    type="email" maxlength="254" required>
+                </div>
+
+                <label class="confirmacion-vinculo">
+                  <input name="confirmado" type="checkbox" required>
+                  Verifiqué que esta cuenta pertenece al cliente seleccionado.
+                </label>
+
+                <p id="mensaje-vinculo" class="mensaje-clientes" role="status"></p>
+
+                <div class="acciones-clientes">
+                  <button class="boton-clientes" type="submit">
+                    Vincular cuenta
+                  </button>
+
+                  <button id="cancelar-vinculo" class="boton-clientes secundario"
+                    type="button">
+                    Cancelar
+                  </button>
+                </div>
+              </fieldset>
+            </form>
+          </section>
+
+          <section class="tarjeta-clientes" aria-labelledby="titulo-listado">
+            <div class="cabecera-clientes">
+              <h2 id="titulo-listado">Listado de clientes</h2>
+              <button id="actualizar-clientes" class="boton-clientes secundario"
+                type="button">
+                Actualizar
+              </button>
+            </div>
+
+            <p id="mensaje-listado" class="mensaje-clientes" role="status"></p>
+
+            <div class="contenedor-tabla" tabindex="0"
+              role="region" aria-label="Listado de clientes">
+              <table class="tabla-clientes">
+                <thead>
+                  <tr>
+                    <th scope="col">Cliente</th>
+                    <th scope="col">DNI</th>
+                    <th scope="col">Contacto</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col">Cuenta</th>
+                    <th scope="col">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="filas-clientes"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="./clientes.ts"></script>
+</body>
+</html>

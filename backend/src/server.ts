@@ -3,6 +3,7 @@ import { conectarDB, cerrarDB } from './db.ts'
 import { registrarUsuario } from './controladores/register.ts'
 import { iniciarSesion } from './controladores/login.ts'
 import { consultarSesion, cerrarSesion,} from './controladores/sesion.ts'
+import { gestionarClientes } from './controladores/clientes.ts'
 
 const server = createServer((request, response) => {
   response.setHeader('Content-Type', 'application/json; charset=utf-8')
@@ -43,6 +44,16 @@ const server = createServer((request, response) => {
     request.url === '/api/usuarios/logout'
   ) {
     void cerrarSesion(request, response)
+    return
+    }
+    // Gestión de clientes: los permisos se comprueban en el controlador.
+  const ruta = request.url?.split('?')[0]
+
+  if (
+    ruta === '/api/clientes' ||
+    ruta === '/api/clientes/vincular'
+  ) {
+    void gestionarClientes(request, response)
     return
   }
   response.writeHead(404)

@@ -488,3 +488,37 @@ Se verificó la incorporación de la lógica de inicio del panel, la función co
 El cliente tiene como destino su perfil; ADMIN y ENTRENADOR comparten la dirección del panel, con secciones y opciones diferentes según el rol. El panel verifica sesión, permite cerrarla y mantiene deshabilitados los módulos aún no implementados. No se consideran ejecutadas pruebas separadas para todos los roles porque el usuario no detalló qué cuentas utilizó.
 
 Se actualizaron los pendientes activos: quedan la redirección automática al abrir login/registro, la entrada principal y las comprobaciones completas de los estados de sesión. El siguiente módulo propuesto es la gestión administrativa de clientes.
+
+### 33. Propuesta completa de gestión de clientes por el chat
+
+El usuario pidió todas las instrucciones del módulo en un solo mensaje, para incorporar personalmente el código del frontend y del backend.
+
+Se revisaron el validador de clientes y los índices del ZIP, el servidor, la consulta de sesión y el panel. La propuesta incluye listado sin datos clínicos para ADMIN/ENTRENADOR, alta de fichas por ADMIN y vinculación verificada por ADMIN con una cuenta USUARIO activa ya registrada. Se usará una transacción para mantener usuarios.clienteId y clientes.usuarioId consistentes, preservando los datos e historial de la ficha.
+
+Archivos propuestos: controlador backend de clientes; helper de transacciones en db.ts; rutas del servidor; clientes.html, clientes.css y clientes.ts en src/panel/clientes; enlace de Clientes en el inicio del panel. No se requieren bibliotecas nuevas. Los índices únicos de dni y usuarioId opcional se comprobarán/crearán desde el código antes de las escrituras. Las referencias opcionales se omiten en las fichas sin cuenta, en lugar de guardarse como null.
+
+Reglas iniciales propuestas para el alta: nombre, apellido y DNI obligatorios; DNI argentino de siete u ocho dígitos, normalizando puntos/espacios/guiones; teléfono y correo de contacto opcionales. El correo de contacto y el correo de la cuenta a vincular son datos distintos. La vinculación exige confirmación explícita del administrador de que la cuenta pertenece al cliente; no se vincula automáticamente por coincidencia de correo.
+
+Todo el código de este módulo se entrega como propuesta por el chat: todavía no se considera incorporado, compilado ni probado. El asistente no creó fichas, vínculos ni índices en Atlas durante esta preparación. La edición, baja lógica y consultas de rutinas, turnos e historia clínica quedan para siguientes pasos.
+
+### 34. Módulo de clientes incorporado y validador real de Atlas compartido
+
+El usuario confirmó que el módulo de clientes funcionó en su prueba. Se verificó en los archivos la incorporación del controlador, con alta, listado y vinculación transaccional. No se consideran ejecutados todos los casos de prueba ni todos los roles porque el usuario no detalló cada caso.
+
+El usuario compartió el validador real de clientes de Atlas. Los campos obligatorios coinciden con el esquema del ZIP utilizado para preparar el código: nombre, apellido, dni (strings), activo (bool), fechaCreacion y fechaModificacion (BSON Date).
+
+La versión real admite null en varios campos opcionales: fechaNacimiento, telefono, email, direccion, contactoEmergencia, usuarioId, historiaClinica y fechaBaja. En rutinas admite hasta 12 elementos y requiere fechaAsignacion, entrenadorId y activo. Dentro de ejercicios requiere ejercicioId; series, repeticiones, descanso y orden admiten int o null, y peso admite double, int o null. La información clínica admite antecedentes, lesiones y observaciones como string o null, y fechaActualizacion como date o null.
+
+El alta actual es compatible: omite los campos opcionales vacíos y usuarioId hasta la vinculación, guarda rutinas como arreglo vacío y fechas como Date. Mantener la omisión de usuarioId en fichas sin cuenta, aunque el validador acepte null, por su índice único sparse.
+
+El usuario informó dos índices adicionales relacionados con dni y usuarioId. El código incorporado solicita dni único y usuarioId único+sparse; la definición real todavía no fue compartida. Para confirmarla, consultar db.clientes.getIndexes(). No se requieren cambios al alta por el validador compartido y no se modificó código ni Atlas durante esta revisión.
+
+### 35. Propuesta de edición y baja lógica de clientes
+
+El usuario solicitó poder editar fichas existentes, especialmente para completar teléfono y correo después del alta, y dar de baja clientes sin eliminarlos físicamente.
+
+Se propone por el chat reutilizar el formulario de alta en modo edición y añadir una acción de baja con confirmación. Ambas operaciones requieren ADMIN también en el backend. La edición modifica nombre, apellido, DNI y datos de contacto; conserva vínculos, rutinas e historia clínica. El correo de contacto no modifica el correo de acceso de la cuenta vinculada.
+
+La baja guarda activo: false, fechaBaja y fechaModificacion. La ficha permanece en el listado como inactiva y conserva su historial y vínculo con la cuenta. Esta acción no desactiva por sí misma la cuenta de usuario. El DNI sigue reservado por su índice único. Reactivación no incluida en este paso.
+
+Pendiente: incorporar el código entregado por el chat y comprobar edición, campos opcionales vacíos, DNI duplicado, baja y permisos. Todavía no se considera implementado ni probado; solo se actualizó este README.
