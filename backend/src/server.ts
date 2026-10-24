@@ -124,9 +124,14 @@ function detener(): void {
 process.once('SIGINT', detener)
 process.once('SIGTERM', detener)
 
-iniciar().catch(async () => {
-  // Evitar mostrar la URI o credenciales en los mensajes de error.
-  console.error('No se pudo iniciar el backend. Revisa la configuracion de Atlas y PORT en backend/.env.')
+iniciar().catch(async (error: unknown) => {
+  console.error('No se pudo iniciar el backend.')
+
+  if (error instanceof Error) {
+    console.error('Tipo de error:', error.name)
+    console.error('Mensaje:', error.message)
+  }
+
   await cerrarDB()
   process.exitCode = 1
 })
