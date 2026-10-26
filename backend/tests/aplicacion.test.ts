@@ -272,7 +272,7 @@ test('agenda genera franjas por hora, conserva asignaciones y es idempotente', a
   for (const capacidad of [0, -1, 1.5]) assert.equal((await app.pedir('/api/turnos/generar', { ...datos, capacidad })).estado, 400)
 })
 
-test('agenda rechaza superposiciones sin cambios parciales y no permite generación al entrenador', async () => {
+test('agenda rechaza superposiciones sin cambios parciales y protege la configuración general', async () => {
   const app = entorno()
   const datos = { franjas: [{ inicio: '18:30', fin: '19:30' }], trabajos: [{ entrenadorId: id(2).toHexString(), dias: ['LUNES'] }], capacidad: 5 }
   assert.equal((await app.pedir('/api/turnos/generar', datos)).estado, 409)
@@ -401,4 +401,46 @@ test('la configuración conserva sus valores iniciales si solo existen contadore
  await app.pedir('/api/turnos/estado', { id:id(41).toHexString(), activo:false });
  const r = await app.pedir('/api/turnos/configuracion');
  assert.equal(r.estado, 200); assert.equal(r.datos.configuracion.franjas.length, 2); assert.equal(r.datos.configuracion.capacidad, 5);
+});
+
+
+test('entrenador accede al mismo generador y conserva la configuración de los demás', async () => {
+ const app = entorno('ENTRENADOR');
+ const franjas = [{ inicio:'08:00', fin:'10:00' }], capacidad = 25;
+ await app.db.collection('configuracion').updateOne({ _id:id(1) }, { $set:{ franjas, capacidad, trabajos:[{ entrenadorId:id(4), dias:['MARTES'] }] } }, { upsert:true });
+ const configuracion = await app.pedir('/api/turnos/configuracion');
+ assert.equal(configuracion.estado,200); assert.equal(configuracion.datos.configuracion.capacidad,25);
+ assert.deepEqual(configuracion.datos.configuracion.trabajos,[]);
+ const datos = { franjas, capacidad, trabajos:[{ entrenadorId:id(2).toHexString(),dias:['LUNES'] }] };
+ assert.equal((await app.pedir('/api/turnos/generar',datos)).estado,200);
+ assert.equal(app.documentos('turnos').filter(t=>t.horaInicio==='08:00'||t.horaInicio==='09:00').length,2);
+ const guardada = app.documentos('configuracion').find(c=>c._id.equals(id(1)))!;
+ assert.equal(guardada.capacidad,25); assert.deepEqual(guardada.franjas,franjas);
+ assert.equal(guardada.trabajos.length,2); assert.ok(guardada.trabajos.some((t:any)=>t.entrenadorId.equals(id(4))));
+ const propia = (await app.pedir('/api/turnos/configuracion')).datos.configuracion;
+ assert.equal(propia.trabajos.length,1); assert.equal(propia.trabajos[0].entrenadorId,id(2).toHexString());
+ assert.equal((await app.pedir('/api/turnos/generar',{...datos,capacidad:26})).estado,403);
+ assert.equal((await app.pedir('/api/turnos/generar',{...datos,franjas:[{inicio:'07:00',fin:'10:00'}]})).estado,403);
+ assert.equal((await app.pedir('/api/turnos/generar',{...datos,trabajos:[{entrenadorId:id(4).toHexString(),dias:['LUNES']}]})).estado,403);
+});
+
+test('entrenador no puede editar, reasignar, desactivar ni ocupar agendas ajenas', async () => {
+ const app = entorno('ENTRENADOR');
+ await app.db.collection('usuarios').insertOne({_id:id(4),nombre:'Otro',apellido:'Entrenador',email:'otro@example.test',rol:'ENTRENADOR',activo:true});
+ await app.db.collection('turnos').insertOne({_id:id(42),dia:'MARTES',horaInicio:'09:00',horaFin:'10:00',capacidad:25,entrenadorId:id(4),activo:true,clientes:[id(12)],historialClientes:[]});
+ const listado = await app.pedir('/api/turnos'); assert.equal(listado.datos.turnos.length,1); assert.equal(listado.datos.turnos[0]._id,id(41).toHexString());
+ const cambio = {id:id(42).toHexString(),dia:'MARTES',horaInicio:'09:00',horaFin:'10:00',capacidad:25,entrenadorId:id(2).toHexString()};
+ assert.equal((await app.pedir('/api/turnos',cambio)).estado,403);
+ assert.equal((await app.pedir('/api/turnos',{...cambio,id:id(41).toHexString(),entrenadorId:id(4).toHexString()})).estado,403);
+ assert.equal((await app.pedir('/api/turnos/estado',{id:id(42).toHexString(),activo:false})).estado,403);
+ for(const accion of ['asignar','retirar'])assert.equal((await app.pedir('/api/turnos/'+accion,{turnoId:id(42).toHexString(),clienteId:id(12).toHexString()})).estado,403);
+ assert.ok(app.documentos('turnos').find(t=>t._id.equals(id(42)))!.entrenadorId.equals(id(4)));
+});
+
+test('ADMIN sigue viendo y administrando todas las agendas', async () => {
+ const app = entorno();
+ await app.db.collection('usuarios').insertOne({_id:id(4),nombre:'Otro',apellido:'Entrenador',email:'otro@example.test',rol:'ENTRENADOR',activo:true});
+ await app.db.collection('turnos').insertOne({_id:id(42),dia:'MARTES',horaInicio:'09:00',horaFin:'10:00',capacidad:25,entrenadorId:id(4),activo:true,clientes:[],historialClientes:[]});
+ assert.equal((await app.pedir('/api/turnos')).datos.turnos.length,2);
+ assert.equal((await app.pedir('/api/turnos/estado',{id:id(42).toHexString(),activo:false})).estado,200);
 });

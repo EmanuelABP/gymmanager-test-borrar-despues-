@@ -1,6 +1,7 @@
 import { prepararPanel } from '../../panel/estructura.ts';
-import { api, elemento, manejarFormulario, enlace, avisar, fecha, ErrorAPI } from '../../compartidos/api.ts';
-import type { Historia } from '../../compartidos/modelos.ts';
+import { api, ErrorAPI } from '../../servicios/api.ts';
+import { elemento, manejarFormulario, enlace, avisar, fecha } from '../../componentes/interfaz.ts';
+import type { Historia } from '../../tipos/entidades.ts';
 let clienteId = '';
 let historia: Historia | null = null;
 let soloLectura = false;

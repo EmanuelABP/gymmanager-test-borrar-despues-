@@ -1,6 +1,6 @@
-import { exigirSesion, cerrarSesion, redirigirSegunRol } from '../compartidos/sesion.ts';
-import type { RolUsuario, UsuarioSesion } from '../compartidos/sesion.ts';
-import { avisar, elemento, nodo } from '../compartidos/api.ts';
+import { exigirSesion, cerrarSesion, redirigirSegunRol } from '../servicios/sesion.ts';
+import type { RolUsuario, UsuarioSesion } from '../servicios/sesion.ts';
+import { avisar, elemento, nodo } from '../componentes/interfaz.ts';
 export async function prepararPanel(titulo: string, roles: RolUsuario[] = ['ADMIN', 'ENTRENADOR']): Promise<UsuarioSesion | null> {
     try {
         const usuario = await exigirSesion();

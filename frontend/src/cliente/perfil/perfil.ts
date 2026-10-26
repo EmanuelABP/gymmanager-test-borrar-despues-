@@ -1,8 +1,9 @@
 import { prepararPanel } from '../../panel/estructura.ts';
-import { api, elemento, nodo, enlace, avisar, fecha } from '../../compartidos/api.ts';
-import { dibujarRutina } from '../../compartidos/rutinas.ts';
-import { prepararImpresionRutina } from '../../compartidos/impresion-rutina.ts';
-import type { Ficha, Turno } from '../../compartidos/modelos.ts';
+import { api } from '../../servicios/api.ts';
+import { elemento, nodo, enlace, avisar, fecha } from '../../componentes/interfaz.ts';
+import { dibujarRutina } from '../../componentes/rutinas.ts';
+import { prepararImpresionRutina } from '../../componentes/impresion-rutina.ts';
+import type { Ficha, Turno } from '../../tipos/entidades.ts';
 async function iniciar(): Promise<void> {
     const usuario = await prepararPanel('Mi perfil', ['USUARIO']);
     if (!usuario)

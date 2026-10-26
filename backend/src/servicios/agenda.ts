@@ -7,9 +7,19 @@ import { esEntrenador } from './autenticacion.ts';
 const idConfiguracion = new ObjectId('000000000000000000000001');
 const minutos = (hora: string) => Number(hora.slice(0, 2)) * 60 + Number(hora.slice(3));
 const hora = (valor: number) => `${String(Math.floor(valor / 60)).padStart(2, '0')}:${String(valor % 60).padStart(2, '0')}`;
-export const configuracionInicial = { franjas: [{ inicio: '09:00', fin: '12:00' }, { inicio: '16:00', fin: '21:00' }], capacidad: 5, trabajos: [] };
-export async function consultarAgenda(db: Db) {
-    return { ...configuracionInicial, ...await db.collection('configuracion').findOne({ _id: idConfiguracion }) };
+interface ConfiguracionAgenda {
+    franjas: { inicio: string; fin: string }[];
+    capacidad: number;
+    trabajos: { entrenadorId: ObjectId; dias: string[] }[];
+}
+export const configuracionInicial: ConfiguracionAgenda = { franjas: [{ inicio: '09:00', fin: '12:00' }, { inicio: '16:00', fin: '21:00' }], capacidad: 5, trabajos: [] };
+export async function consultarAgenda(db: Db, session?: ClientSession): Promise<ConfiguracionAgenda> {
+    const guardada = await db.collection('configuracion').findOne({ _id: idConfiguracion }, { session });
+    return {
+        franjas: guardada?.franjas ?? configuracionInicial.franjas,
+        capacidad: guardada?.capacidad ?? configuracionInicial.capacidad,
+        trabajos: guardada?.trabajos ?? [],
+    };
 }
 type Transaccion = (operacion: (db: Db, sesion: ClientSession) => Promise<void>) => Promise<void>;
 export async function cambiarAgenda(transaccion: Transaccion, usuario: {
@@ -22,6 +32,10 @@ export async function cambiarAgenda(transaccion: Transaccion, usuario: {
         // cambios y asignaciones concurrentes sin duplicar franjas ni superar cupos.
         await db.collection('configuracion').updateOne({ _id: idConfiguracion }, { $inc: { revisionAgenda: 1 } }, { upsert: true, session });
         const turnos = db.collection<Turno>('turnos');
+        function exigirAgendaPropia(entrenadorId: ObjectId) {
+            if (usuario.rol === 'ENTRENADOR' && entrenadorId.toHexString() !== usuario.id)
+                throw new ErrorHTTP(403, 'Solo podés modificar tu propia agenda.');
+        }
         async function entrenador(id: ObjectId) {
             const cuenta = await db.collection('usuarios').findOne({ _id: id, activo: true }, { session });
             if (!cuenta || !esEntrenador({ rol: cuenta.rol, esEntrenador: cuenta.esEntrenador }))
@@ -51,8 +65,12 @@ export async function cambiarAgenda(transaccion: Transaccion, usuario: {
             return;
         }
         if (ruta === '/api/turnos/generar') {
-            if (usuario.rol !== 'ADMIN')
-                throw new ErrorHTTP(403, 'Solo ADMIN configura los horarios del gimnasio.');
+            const configuracion = await consultarAgenda(db, session);
+            // Ambos roles usan el mismo generador. Solo ADMIN cambia apertura y cupo generales.
+            const conservaApertura = Array.isArray(datos.franjas) && datos.franjas.length === configuracion.franjas.length && datos.franjas.every((f, i) =>
+                f && typeof f === 'object' && f.inicio === configuracion.franjas[i]!.inicio && f.fin === configuracion.franjas[i]!.fin);
+            if (usuario.rol === 'ENTRENADOR' && (datos.capacidad !== configuracion.capacidad || !conservaApertura))
+                throw new ErrorHTTP(403, 'Solo ADMIN cambia los horarios de apertura y el cupo general.');
             const capacidad = entero(datos.capacidad, 'capacidad', 1, Number.MAX_SAFE_INTEGER);
             if (!Array.isArray(datos.franjas) || datos.franjas.length < 1 || datos.franjas.length > 4)
                 throw new ErrorHTTP(400, 'Indicá entre una y cuatro franjas de apertura.');
@@ -76,6 +94,7 @@ export async function cambiarAgenda(transaccion: Transaccion, usuario: {
             });
             if (new Set(trabajos.map(t => t.entrenadorId.toHexString())).size !== trabajos.length)
                 throw new ErrorHTTP(400, 'Un entrenador aparece repetido.');
+            for (const trabajo of trabajos) exigirAgendaPropia(trabajo.entrenadorId);
             let creados = 0, conservados = 0;
             const existentes = await turnos.find({}, { session }).toArray();
             const cuentas = await db.collection('usuarios').find({ _id: { $in: trabajos.map(t => t.entrenadorId) }, activo: true }, { session }).toArray();
@@ -105,7 +124,12 @@ export async function cambiarAgenda(transaccion: Transaccion, usuario: {
             }
             if (operaciones.length)
                 await turnos.bulkWrite(operaciones, { session });
-            await db.collection('configuracion').updateOne({ _id: idConfiguracion }, { $set: { franjas, capacidad, trabajos, fechaModificacion: new Date() } }, { session });
+            const seleccionados = new Set(trabajos.map(t => t.entrenadorId.toHexString()));
+            const trabajosActualizados = [...configuracion.trabajos.filter(t => !seleccionados.has(t.entrenadorId.toHexString())), ...trabajos];
+            await db.collection('configuracion').updateOne({ _id: idConfiguracion }, { $set: {
+                ...(usuario.rol === 'ADMIN' ? { franjas, capacidad } : {}),
+                trabajos: trabajosActualizados, fechaModificacion: new Date(),
+            } }, { session });
             mensaje = `Agenda generada: ${creados} turnos nuevos y ${conservados} conservados. Las asignaciones existentes se mantuvieron.`;
             return;
         }
@@ -116,11 +140,13 @@ export async function cambiarAgenda(transaccion: Transaccion, usuario: {
             const horaInicio = texto(datos, 'horaInicio', 5, true), horaFin = texto(datos, 'horaFin', 5, true);
             validarFranja(horaInicio, horaFin);
             const capacidad = entero(datos.capacidad, 'capacidad', 1, Number.MAX_SAFE_INTEGER), entrenadorId = identificador(datos.entrenadorId);
+            exigirAgendaPropia(entrenadorId);
             await entrenador(entrenadorId);
             const id = datos.id ? identificador(datos.id) : undefined;
             const existente = id ? await turnos.findOne({ _id: id }, { session }) : null;
             if (id && !existente)
                 throw new ErrorHTTP(404, 'El turno no existe.');
+            if (existente) exigirAgendaPropia(existente.entrenadorId);
             if (existente && existente.clientes.length > capacidad)
                 throw new ErrorHTTP(409, 'El cupo no puede ser menor a la ocupación.', ['capacidad']);
             if (!existente || existente.activo)
@@ -138,6 +164,7 @@ export async function cambiarAgenda(transaccion: Transaccion, usuario: {
             const turno = await turnos.findOne({ _id: identificador(datos.id) }, { session });
             if (!turno)
                 throw new ErrorHTTP(404, 'El turno no existe.');
+            exigirAgendaPropia(turno.entrenadorId);
             if (datos.activo) {
                 validarFranja(turno.horaInicio, turno.horaFin);
                 await entrenador(turno.entrenadorId);
@@ -152,6 +179,7 @@ export async function cambiarAgenda(transaccion: Transaccion, usuario: {
         const turno = await turnos.findOne({ _id: turnoId }, { session });
         if (!turno)
             throw new ErrorHTTP(404, 'El turno no existe.');
+        exigirAgendaPropia(turno.entrenadorId);
         const asignar = ruta.endsWith('/asignar');
         if (asignar) {
             validarFranja(turno.horaInicio, turno.horaFin);

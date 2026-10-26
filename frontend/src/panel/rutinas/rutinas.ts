@@ -1,8 +1,9 @@
 import { prepararPanel } from '../estructura.ts';
-import { api, elemento, manejarFormulario, opciones, nodo, boton, acciones, avisar, fecha, nombreCompleto, ErrorAPI } from '../../compartidos/api.ts';
-import { dibujarRutina } from '../../compartidos/rutinas.ts';
-import { prepararImpresionRutina } from '../../compartidos/impresion-rutina.ts';
-import type { ClienteListado, Personal, Ejercicio, Ficha, Rutina, EjercicioRutina } from '../../compartidos/modelos.ts';
+import { api, ErrorAPI } from '../../servicios/api.ts';
+import { elemento, manejarFormulario, opciones, nodo, boton, acciones, avisar, fecha, nombreCompleto } from '../../componentes/interfaz.ts';
+import { dibujarRutina } from '../../componentes/rutinas.ts';
+import { prepararImpresionRutina } from '../../componentes/impresion-rutina.ts';
+import type { ClienteListado, Personal, Ejercicio, Ficha, Rutina, EjercicioRutina } from '../../tipos/entidades.ts';
 let catalogo: Ejercicio[] = [];
 let ficha: Ficha | undefined;
 let editando: Rutina | undefined;

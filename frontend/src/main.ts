@@ -1,5 +1,5 @@
 import './style.css'
-import { obtenerSesion, redirigirSegunRol } from './compartidos/sesion.ts'
+import { obtenerSesion, redirigirSegunRol } from './servicios/sesion.ts'
 const aviso = document.querySelector<HTMLDivElement>('#app')!
 aviso.textContent = 'Comprobando tu sesión…'
 obtenerSesion().then(usuario => {

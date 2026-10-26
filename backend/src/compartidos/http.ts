@@ -13,7 +13,10 @@ export function responder(res: ServerResponse, estado: number, datos: unknown): 
     res.writeHead(estado, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
     res.end(JSON.stringify(datos));
 }
-export async function leerJSON(req: IncomingMessage): Promise<Record<string, unknown>> {
+export function responderMensaje(res: ServerResponse, estado: number, mensaje: string): void {
+    responder(res, estado, { mensaje });
+}
+export async function leerJSON(req: IncomingMessage, limiteBytes = 65536): Promise<Record<string, unknown>> {
     if (req.headers['content-type']?.split(';')[0].trim().toLowerCase() !== 'application/json') {
         throw new ErrorHTTP(415, 'Enviá los datos en formato JSON.');
     }
@@ -24,7 +27,7 @@ export async function leerJSON(req: IncomingMessage): Promise<Record<string, unk
         if (grande)
             continue;
         cuerpo += parte;
-        if (Buffer.byteLength(cuerpo) > 65536) {
+        if (Buffer.byteLength(cuerpo) > limiteBytes) {
             grande = true;
             cuerpo = '';
         }

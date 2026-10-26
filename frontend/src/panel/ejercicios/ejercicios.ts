@@ -1,7 +1,8 @@
-import { confirmar } from '../../compartidos/dialogo.ts'
+import { confirmar } from '../../componentes/dialogo.ts'
 import { prepararPanel } from '../estructura.ts';
-import { api, elemento, manejarFormulario, tabla, boton, acciones, avisar } from '../../compartidos/api.ts';
-import type { Ejercicio } from '../../compartidos/modelos.ts';
+import { api } from '../../servicios/api.ts';
+import { elemento, manejarFormulario, tabla, boton, acciones, avisar } from '../../componentes/interfaz.ts';
+import type { Ejercicio } from '../../tipos/entidades.ts';
 let ejercicios: Ejercicio[] = [];
 let administrador = false;
 const formulario = elemento<HTMLFormElement>('formulario-ejercicio');

@@ -1,4 +1,4 @@
-import { obtenerSesion, redirigirSegunRol } from '../../compartidos/sesion.ts'
+import { obtenerSesion, redirigirSegunRol } from '../../servicios/sesion.ts'
 import { comprobarEntradaPublica } from '../comprobar-sesion.ts'
 void comprobarEntradaPublica()
 // 1. Obtenemos los elementos del HTML.

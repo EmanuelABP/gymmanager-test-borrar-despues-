@@ -1,7 +1,8 @@
-import { confirmar } from '../../compartidos/dialogo.ts';
+import { confirmar } from '../../componentes/dialogo.ts';
 import { prepararPanel } from '../estructura.ts';
-import { api, elemento, manejarFormulario, opciones, tabla, acciones, boton, avisar, nombreCompleto, fecha, dinero, hoy } from '../../compartidos/api.ts';
-import type { ClienteListado, Pago } from '../../compartidos/modelos.ts';
+import { api } from '../../servicios/api.ts';
+import { elemento, manejarFormulario, opciones, tabla, acciones, boton, avisar, nombreCompleto, fecha, dinero, hoy } from '../../componentes/interfaz.ts';
+import type { ClienteListado, Pago } from '../../tipos/entidades.ts';
 interface Pendiente {
     cliente: {
         _id: string;

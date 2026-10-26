@@ -1,5 +1,6 @@
 import { prepararPanel } from '../panel/estructura.ts';
-import { api, elemento, manejarFormulario, nodo, ErrorAPI, avisar } from '../compartidos/api.ts';
+import { api, ErrorAPI } from '../servicios/api.ts';
+import { elemento, manejarFormulario, nodo, avisar } from '../componentes/interfaz.ts';
 async function iniciar(): Promise<void> {
     const usuario = await prepararPanel('Mi cuenta', ['ADMIN', 'ENTRENADOR', 'USUARIO']);
     if (!usuario)

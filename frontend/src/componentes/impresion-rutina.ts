@@ -1,6 +1,6 @@
 import './impresion-rutina.css';
-import { nodo, fecha } from './api.ts';
-import type { Ficha, Rutina } from './modelos.ts';
+import { nodo, fecha } from './interfaz.ts';
+import type { Ficha, Rutina } from '../tipos/entidades.ts';
 
 // La misma hoja para los tres roles. No imprime la pantalla ni datos clínicos.
 // También se aplica con Ctrl+P, una vez cargada la rutina vigente.

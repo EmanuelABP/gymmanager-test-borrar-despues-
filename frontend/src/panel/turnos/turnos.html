@@ -13,18 +13,18 @@
   <body>
     <div id="vista" hidden><section class="tarjeta" id="configurar-agenda" hidden>
 <h2>Horarios del gimnasio y días de trabajo</h2>
-<p class="ayuda">Configurá las franjas de apertura y marcá los días de cada ENTRENADOR. Se generará un turno por hora y por entrenador, con el cupo que elijas por turno.</p>
+<p id="ayuda-agenda" class="ayuda">Configurá las franjas de apertura y marcá los días de cada ENTRENADOR. Se generará un turno por hora y por entrenador, con el cupo que elijas por turno.</p>
 <form id="formulario-agenda" class="formulario" novalidate>
 <div id="franjas-apertura" class="ancho lista-detalle"></div>
-<div class="acciones"><button id="agregar-franja" class="boton secundario" type="button">Agregar franja de apertura</button></div>
+<div class="acciones" id="acciones-apertura"><button id="agregar-franja" class="boton secundario" type="button">Agregar franja de apertura</button></div>
 <label class="campo">Clientes por entrenador y hora<input name="capacidad" type="number" min="1" value="5" required></label>
 <fieldset class="ancho dias-entrenador" id="dias-comunes"><legend>Días para los entrenadores seleccionados</legend></fieldset><details class="ancho seleccion-entrenadores"><summary>Seleccionar entrenadores <span id="cantidad-entrenadores"></span></summary><div id="dias-entrenadores" class="lista-detalle"></div></details>
 <p class="ayuda ancho">Los turnos coincidentes conservan sus clientes. Generar no elimina otros horarios. Si hay bloques anteriores de varias horas, editá o desactivá esos bloques primero.</p>
 <div class="acciones"><button class="boton" type="submit">Guardar y generar agenda semanal</button></div>
-</form></section><details id="excepcion-turno" class="tarjeta"><summary>Crear o editar un turno individual</summary>
+</form></section><details id="editor-turno" class="tarjeta" hidden><summary>Editar el turno seleccionado</summary>
       <section class="tarjeta">
-        <h2 id="titulo-turno">Crear turno semanal</h2>
-        <form id="formulario-turno" class="formulario" novalidate>
+        <h2 id="titulo-turno">Editar turno semanal</h2>
+        <form id="formulario-edicion-turno" class="formulario" novalidate>
           <input name="id" type="hidden">
           <label class="campo">Día *<select name="dia" id="dia" required>
               <option value="LUNES">LUNES</option>
@@ -48,9 +48,8 @@
           <label class="campo ancho">Observaciones<textarea name="observaciones" maxlength="2000" rows="3"></textarea>
           </label>
           <div class="acciones">
-            <button class="boton" type="submit" id="guardar-turno">Crear turno</button>
-            <button id="cancelar-turno" class="boton secundario" type="button" hidden>Cancelar edición</button>
-            <button class="boton secundario" type="reset">Limpiar</button>
+            <button class="boton" type="submit" id="guardar-turno">Guardar cambios</button>
+            <button id="cancelar-turno" class="boton secundario" type="button">Cancelar edición</button>
           </div>
         </form>
       </section></details>

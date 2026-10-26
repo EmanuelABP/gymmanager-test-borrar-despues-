@@ -1,16 +1,23 @@
 import { prepararPanel } from '../estructura.ts';
-import { confirmar } from '../../compartidos/dialogo.ts';
-import { api, elemento, manejarFormulario, opciones, nodo, boton, acciones, tabla, avisar, nombreCompleto, ErrorAPI } from '../../compartidos/api.ts';
-import type { ClienteListado, Personal, Turno } from '../../compartidos/modelos.ts';
+import { confirmar } from '../../componentes/dialogo.ts';
+import { api, ErrorAPI } from '../../servicios/api.ts';
+import { elemento, manejarFormulario, opciones, nodo, boton, acciones, tabla, avisar, nombreCompleto } from '../../componentes/interfaz.ts';
+import type { ClienteListado, Personal, Turno } from '../../tipos/entidades.ts';
 const dias = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
-const formulario = elemento<HTMLFormElement>('formulario-turno');
+const formulario = elemento<HTMLFormElement>('formulario-edicion-turno');
 let turnos: Turno[] = [], personal: Personal[] = [];
 let administrador = false;
 const seleccionados = new Set<string>();
 let visiblesActuales: Turno[] = [];
 function contarSeleccion(): void { elemento('cantidad-seleccionados').textContent = seleccionados.size + ' seleccionados'; }
 const descripcion = (t: Turno) => t.dia + ' · ' + t.horaInicio + '–' + t.horaFin + ' · ' + t.entrenador;
-function limpiarEdicion(): void { formulario.reset(); (formulario.elements.namedItem('id') as HTMLInputElement).value = ''; elemento('titulo-turno').textContent = 'Crear turno semanal'; elemento('guardar-turno').textContent = 'Crear turno'; elemento('cancelar-turno').hidden = true; }
+function limpiarEdicion(): void {
+    formulario.reset();
+    (formulario.elements.namedItem('id') as HTMLInputElement).value = '';
+    const editor = elemento<HTMLDetailsElement>('editor-turno');
+    editor.open = false;
+    editor.hidden = true;
+}
 function editar(turno: Turno): void {
     if (formulario.getAttribute('aria-busy') === 'true')
         return;
@@ -20,7 +27,8 @@ function editar(turno: Turno): void {
     elemento('titulo-turno').textContent = 'Editar turno';
     elemento('guardar-turno').textContent = 'Guardar cambios';
     elemento('cancelar-turno').hidden = false;
-    elemento<HTMLDetailsElement>('excepcion-turno').open = true;
+    elemento<HTMLDetailsElement>('editor-turno').hidden = false;
+    elemento<HTMLDetailsElement>('editor-turno').open = true;
     formulario.scrollIntoView({ block: 'start' });
 }
 function esPorHora(t: Turno): boolean { const minutos = (h: string) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3)); return minutos(t.horaFin) - minutos(t.horaInicio) === 60; }
@@ -56,10 +64,20 @@ function mostrar(): void {
             if (!t.integrantes.length)
                 clientes.append(nodo('span', 'Sin clientes', 'ayuda'));
             for (const c of t.integrantes)
-                clientes.append(acciones(nodo('span', nombreCompleto(c)), boton('Retirar', async () => { if (!await confirmar('¿Retirar a ' + nombreCompleto(c) + ' del turno ' + t.horaInicio + '–' + t.horaFin + '?'))
-                    return; const r = await api('/api/turnos/retirar', { turnoId: t._id, clienteId: c._id }); await cargar(); avisar(r.mensaje, true); }, true)));
-            const botones = acciones(boton('Editar', () => editar(t)), boton(t.activo ? 'Desactivar' : 'Reactivar', async () => { if (!await confirmar('¿' + (t.activo ? 'Desactivar' : 'Reactivar') + ' este turno semanal?', t.activo ? 'Desactivar turno' : 'Reactivar turno'))
-                return; const r = await api('/api/turnos/estado', { id: t._id, activo: !t.activo }); await cargar(); avisar(r.mensaje, true); }, t.activo));
+                clientes.append(acciones(nodo('span', nombreCompleto(c)), boton('Retirar', async () => {
+                    if (!await confirmar('¿Retirar a ' + nombreCompleto(c) + ' del turno ' + t.horaInicio + '–' + t.horaFin + '?'))
+                        return;
+                    const r = await api('/api/turnos/retirar', { turnoId: t._id, clienteId: c._id });
+                    await cargar();
+                    avisar(r.mensaje, true);
+                }, true)));
+            const botones = acciones(boton('Editar', () => editar(t)), boton(t.activo ? 'Desactivar' : 'Reactivar', async () => {
+                if (!await confirmar('¿' + (t.activo ? 'Desactivar' : 'Reactivar') + ' este turno semanal?', t.activo ? 'Desactivar turno' : 'Reactivar turno'))
+                    return;
+                const r = await api('/api/turnos/estado', { id: t._id, activo: !t.activo });
+                await cargar();
+                avisar(r.mensaje, true);
+            }, t.activo));
             if (t.activo && t.ocupacion < t.capacidad && esPorHora(t))
                 botones.prepend(boton('Asignar cliente', () => { elemento<HTMLSelectElement>('turnoId').value = t._id; elemento('formulario-asignacion').scrollIntoView({ block: 'start' }); }));
             const estado = nodo('span', t.activo ? 'Activo' : 'Inactivo', 'estado-etiqueta' + (t.activo ? '' : ' inactivo'));
@@ -67,12 +85,17 @@ function mostrar(): void {
             if (!esPorHora(t))
                 horario.append(nodo('p', 'Bloque anterior: adaptá a una hora.', 'aviso-bloque'));
             if (administrador) {
- const elegir = nodo('input'); elegir.type = 'checkbox'; elegir.checked = seleccionados.has(t._id);
- elegir.setAttribute('aria-label', 'Seleccionar ' + descripcion(t));
- elegir.addEventListener('change', () => { if (elegir.checked) seleccionados.add(t._id); else seleccionados.delete(t._id); contarSeleccion(); });
- horario.prepend(elegir, document.createTextNode(' '));
-}
-return [horario, cupo, clientes, estado, botones];
+                const elegir = nodo('input');
+                elegir.type = 'checkbox';
+                elegir.checked = seleccionados.has(t._id);
+                elegir.setAttribute('aria-label', 'Seleccionar ' + descripcion(t));
+                elegir.addEventListener('change', () => { if (elegir.checked)
+                    seleccionados.add(t._id);
+                else
+                    seleccionados.delete(t._id); contarSeleccion(); });
+                horario.prepend(elegir, document.createTextNode(' '));
+            }
+            return [horario, cupo, clientes, estado, botones];
         }));
         lista.append(bloque);
     }
@@ -99,7 +122,11 @@ function agregarFranja(inicio = '', fin = ''): void {
     fila.innerHTML = '<label class="campo">Apertura<input type="time" data-inicio required></label><label class="campo">Cierre<input type="time" data-fin required></label>';
     fila.querySelector<HTMLInputElement>('[data-inicio]')!.value = inicio;
     fila.querySelector<HTMLInputElement>('[data-fin]')!.value = fin;
-    fila.append(boton('Quitar franja', () => fila.remove(), true));
+    if (administrador)
+        fila.append(boton('Quitar franja', () => fila.remove(), true));
+    else
+        for (const campo of fila.querySelectorAll<HTMLInputElement>('input'))
+            campo.readOnly = true;
     lista.append(fila);
 }
 interface Configuracion {
@@ -115,6 +142,11 @@ interface Configuracion {
 }
 async function prepararAgenda(): Promise<void> {
     elemento('configurar-agenda').hidden = false;
+    elemento('acciones-apertura').hidden = !administrador;
+    if (!administrador) {
+        elemento('ayuda-agenda').textContent = 'Elegí tus días y generá tu agenda con los horarios de apertura y el cupo definidos por administración. Las asignaciones existentes se conservan.';
+        (elemento<HTMLFormElement>('formulario-agenda').elements.namedItem('capacidad') as HTMLInputElement).readOnly = true;
+    }
     const { configuracion: c } = await api<{
         configuracion: Configuracion;
     }>('/api/turnos/configuracion');
@@ -123,14 +155,23 @@ async function prepararAgenda(): Promise<void> {
     (elemento<HTMLFormElement>('formulario-agenda').elements.namedItem('capacidad') as HTMLInputElement).value = String(c.capacidad);
     const diasElegidos = new Set(c.trabajos.flatMap(t => t.dias));
     for (const dia of dias) {
-        const etiqueta = nodo('label'), check = nodo('input'); check.type = 'checkbox'; check.value = dia; check.checked = diasElegidos.has(dia);
-        etiqueta.append(check, document.createTextNode(dia)); elemento('dias-comunes').append(etiqueta);
+        const etiqueta = nodo('label'), check = nodo('input');
+        check.type = 'checkbox';
+        check.value = dia;
+        check.checked = diasElegidos.has(dia);
+        etiqueta.append(check, document.createTextNode(dia));
+        elemento('dias-comunes').append(etiqueta);
     }
     const contar = () => { elemento('cantidad-entrenadores').textContent = '(' + elemento('dias-entrenadores').querySelectorAll('input:checked').length + ')'; };
     for (const p of personal) {
-        const etiqueta = nodo('label'), check = nodo('input'); check.type = 'checkbox'; check.value = p._id;
-        check.checked = c.trabajos.some(t => t.entrenadorId === p._id); check.addEventListener('change', contar);
-        etiqueta.append(check, document.createTextNode(nombreCompleto(p))); elemento('dias-entrenadores').append(etiqueta);
+        const etiqueta = nodo('label'), check = nodo('input');
+        check.type = 'checkbox';
+        check.value = p._id;
+        check.checked = !administrador || c.trabajos.some(t => t.entrenadorId === p._id);
+        check.disabled = !administrador;
+        check.addEventListener('change', contar);
+        etiqueta.append(check, document.createTextNode(nombreCompleto(p)));
+        elemento('dias-entrenadores').append(etiqueta);
     }
     contar();
     if (!personal.length)
@@ -138,7 +179,8 @@ async function prepararAgenda(): Promise<void> {
     manejarFormulario('formulario-agenda', async (datos) => {
         const franjas = [...elemento('franjas-apertura').children].map(f => ({ inicio: f.querySelector<HTMLInputElement>('[data-inicio]')!.value, fin: f.querySelector<HTMLInputElement>('[data-fin]')!.value }));
         const diasMarcados = [...elemento('dias-comunes').querySelectorAll<HTMLInputElement>('input:checked')].map(c => c.value);
-        if (!diasMarcados.length) throw new ErrorAPI('Seleccioná al menos un día.');
+        if (!diasMarcados.length)
+            throw new ErrorAPI('Seleccioná al menos un día.');
         const trabajos = [...elemento('dias-entrenadores').querySelectorAll<HTMLInputElement>('input:checked')].map(c => ({ entrenadorId: c.value, dias: diasMarcados }));
         if (!trabajos.length)
             throw new ErrorAPI('Marcá los días de al menos un entrenador.');
@@ -154,25 +196,32 @@ async function iniciar(): Promise<void> {
     const usuario = await prepararPanel('Turnos');
     if (!usuario)
         return;
+    administrador = usuario.rol === 'ADMIN';
     personal = (await api<{
         personal: Personal[];
-    }>('/api/personal')).personal;
+    }>('/api/personal')).personal.filter(p => administrador || p._id === usuario.id);
     opciones(elemento<HTMLSelectElement>('entrenadorId'), personal.map(p => ({ valor: p._id, texto: nombreCompleto(p) })));
     opciones(elemento<HTMLSelectElement>('filtro-entrenador'), personal.map(p => ({ valor: p._id, texto: nombreCompleto(p) })), 'Todos los entrenadores');
     if (usuario.rol === 'ENTRENADOR')
         elemento<HTMLSelectElement>('entrenadorId').value = usuario.id;
-    administrador = usuario.rol === 'ADMIN';
+    await prepararAgenda();
     if (administrador) {
-        await prepararAgenda(); elemento('acciones-masivas').hidden = false;
+        elemento('acciones-masivas').hidden = false;
         elemento('seleccionar-visibles').addEventListener('click', () => {
             const todos = visiblesActuales.every(t => seleccionados.has(t._id));
-            for (const t of visiblesActuales) { if (todos) seleccionados.delete(t._id); else seleccionados.add(t._id); }
+            for (const t of visiblesActuales) {
+                if (todos)
+                    seleccionados.delete(t._id);
+                else
+                    seleccionados.add(t._id);
+            }
             mostrar();
         });
         elemento('baja-seleccion').addEventListener('click', () => void cambiarSeleccion(false).catch(avisar));
         elemento('borrar-seleccion').addEventListener('click', () => void cambiarSeleccion(true).catch(avisar));
     }
-    manejarFormulario('formulario-turno', async (datos) => { const r = await api('/api/turnos', { ...datos, capacidad: Number(datos.capacidad) }); limpiarEdicion(); await cargar(); return r.mensaje; });
+    manejarFormulario('formulario-edicion-turno', async (datos) => { if (!datos.id)
+        throw new ErrorAPI('Seleccioná un turno del listado para editar.'); const r = await api('/api/turnos', { ...datos, capacidad: Number(datos.capacidad) }); limpiarEdicion(); await cargar(); return r.mensaje; });
     manejarFormulario('formulario-asignacion', async (datos) => { const r = await api('/api/turnos/asignar', datos); await cargar(); return r.mensaje; });
     elemento('cancelar-turno').addEventListener('click', limpiarEdicion);
     for (const id of ['filtro-entrenador', 'filtro-dia', 'filtro-estado'])
@@ -180,14 +229,22 @@ async function iniciar(): Promise<void> {
     await cargar();
 }
 void iniciar().catch(avisar);
-
 let cambiandoSeleccion = false;
 async function cambiarSeleccion(eliminar: boolean): Promise<void> {
-    if (cambiandoSeleccion) return;
-    if (!seleccionados.size) throw new ErrorAPI('Seleccioná uno o más turnos. Podés filtrar por entrenador y seleccionar todos los visibles.');
+    if (cambiandoSeleccion)
+        return;
+    if (!seleccionados.size)
+        throw new ErrorAPI('Seleccioná uno o más turnos. Podés filtrar por entrenador y seleccionar todos los visibles.');
     const ids = [...seleccionados];
-    if (!await confirmar(eliminar ? 'Vas a eliminar definitivamente ' + ids.length + ' turnos, sus asignaciones e historial. No podrás recuperarlos. Esta acción es irreversible.' : '¿Dar de baja ' + ids.length + ' turnos? Se conservará su historial y dejarán de aparecer en los perfiles.', eliminar ? 'Eliminar definitivamente' : 'Dar de baja turnos')) return;
+    if (!await confirmar(eliminar ? 'Vas a eliminar definitivamente ' + ids.length + ' turnos, sus asignaciones e historial. No podrás recuperarlos. Esta acción es irreversible.' : '¿Dar de baja ' + ids.length + ' turnos? Se conservará su historial y dejarán de aparecer en los perfiles.', eliminar ? 'Eliminar definitivamente' : 'Dar de baja turnos'))
+        return;
     cambiandoSeleccion = true;
-    try { const r = await api('/api/turnos/lote', { ids, eliminar, confirmado: true }); await cargar(); avisar(r.mensaje, true); }
-    finally { cambiandoSeleccion = false; }
+    try {
+        const r = await api('/api/turnos/lote', { ids, eliminar, confirmado: true });
+        await cargar();
+        avisar(r.mensaje, true);
+    }
+    finally {
+        cambiandoSeleccion = false;
+    }
 }

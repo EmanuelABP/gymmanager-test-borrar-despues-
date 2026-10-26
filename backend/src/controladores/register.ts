@@ -3,57 +3,11 @@ import { hash } from 'bcryptjs';
 import { MongoServerError } from 'mongodb';
 import { conectarDB, ejecutarTransaccion } from '../db.ts';
 import { nuevaSesion, prepararSesiones, enviarCookie } from '../servicios/autenticacion.ts';
-// Envía una respuesta JSON al navegador.
-function responder(respuesta: ServerResponse, estado: number, mensaje: string): void {
-    respuesta.writeHead(estado, {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Cache-Control': 'no-store',
-    });
-    respuesta.end(JSON.stringify({ mensaje }));
-}
+import { ErrorHTTP, leerJSON, responderMensaje as responder } from '../compartidos/http.ts';
 export function crearRegistrador(dependencias = { conectar: conectarDB, transaccion: ejecutarTransaccion }) {
     return async function registrarUsuario(solicitud: IncomingMessage, respuesta: ServerResponse): Promise<void> {
         try {
-            // Aceptamos únicamente datos enviados como JSON.
-            const tipoContenido = solicitud.headers['content-type']
-                ?.split(';')[0]
-                ?.trim()
-                .toLowerCase();
-            if (tipoContenido !== 'application/json') {
-                responder(respuesta, 415, 'El formato de los datos no es válido.');
-                return;
-            }
-            // Leemos el cuerpo, limitándolo a 16 KB.
-            let cuerpo = '';
-            let demasiadoGrande = false;
-            solicitud.setEncoding('utf8');
-            for await (const fragmento of solicitud) {
-                if (demasiadoGrande)
-                    continue;
-                cuerpo += fragmento;
-                if (Buffer.byteLength(cuerpo, 'utf8') > 16384) {
-                    demasiadoGrande = true;
-                    cuerpo = '';
-                }
-            }
-            if (demasiadoGrande) {
-                responder(respuesta, 413, 'Los datos enviados son demasiado extensos.');
-                return;
-            }
-            // Convertimos el texto JSON en un objeto.
-            let datos: unknown;
-            try {
-                datos = JSON.parse(cuerpo);
-            }
-            catch {
-                responder(respuesta, 400, 'Los datos enviados no tienen un JSON válido.');
-                return;
-            }
-            if (!datos || typeof datos !== 'object' || Array.isArray(datos)) {
-                responder(respuesta, 400, 'Los datos del registro no son válidos.');
-                return;
-            }
-            const campos = datos as Record<string, unknown>;
+            const campos = await leerJSON(solicitud, 16_384);
             // No confiamos solamente en las validaciones del navegador.
             if (typeof campos.nombre !== 'string' ||
                 typeof campos.apellido !== 'string' ||
@@ -115,6 +69,7 @@ export function crearRegistrador(dependencias = { conectar: conectarDB, transacc
             responder(respuesta, 201, 'Tu cuenta se creó correctamente.');
         }
         catch (error) {
+            if (error instanceof ErrorHTTP) { responder(respuesta, error.estado, error.message); return; }
             // El índice único de MongoDB también protege contra registros simultáneos.
             if (error instanceof MongoServerError &&
                 error.code === 11000 &&

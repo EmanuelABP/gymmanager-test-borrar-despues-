@@ -1,5 +1,5 @@
-import { nodo, tabla, fecha } from './api.ts';
-import type { Rutina } from './modelos.ts';
+import { nodo, tabla, fecha } from './interfaz.ts';
+import type { Rutina } from '../tipos/entidades.ts';
 export function dibujarRutina(contenedor: HTMLElement, rutina?: Rutina): void {
     contenedor.replaceChildren();
     if (!rutina) {

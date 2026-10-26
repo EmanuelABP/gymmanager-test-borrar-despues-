@@ -1,7 +1,8 @@
 import { prepararPanel } from '../estructura.ts';
-import { confirmar } from '../../compartidos/dialogo.ts';
-import { api, elemento, manejarFormulario, tabla, acciones, boton, nodo, avisar, nombreCompleto } from '../../compartidos/api.ts';
-import type { Cuenta } from '../../compartidos/modelos.ts';
+import { confirmar } from '../../componentes/dialogo.ts';
+import { api } from '../../servicios/api.ts';
+import { elemento, manejarFormulario, tabla, acciones, boton, nodo, avisar, nombreCompleto } from '../../componentes/interfaz.ts';
+import type { Cuenta } from '../../tipos/entidades.ts';
 let cuentas: Cuenta[] = [];
 let miId = '';
 function mostrar(): void {

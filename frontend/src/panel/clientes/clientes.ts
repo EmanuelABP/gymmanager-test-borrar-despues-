@@ -1,7 +1,8 @@
-import { confirmar } from '../../compartidos/dialogo.ts'
+import { confirmar } from '../../componentes/dialogo.ts'
 import { prepararPanel } from '../estructura.ts';
-import { api, elemento, manejarFormulario, tabla, acciones, boton, enlace, avisar, nombreCompleto } from '../../compartidos/api.ts';
-import type { ClienteListado, Ficha } from '../../compartidos/modelos.ts';
+import { api } from '../../servicios/api.ts';
+import { elemento, manejarFormulario, tabla, acciones, boton, enlace, avisar, nombreCompleto } from '../../componentes/interfaz.ts';
+import type { ClienteListado, Ficha } from '../../tipos/entidades.ts';
 let clientes: ClienteListado[] = [];
 let administrador = false;
 const formulario = elemento<HTMLFormElement>('formulario-cliente');

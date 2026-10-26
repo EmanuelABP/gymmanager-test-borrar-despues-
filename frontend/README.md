@@ -591,3 +591,19 @@ Se separó el documento de impresión de la pantalla del perfil y del panel de r
 El documento se prepara con la rutina vigente ya cargada y funciona tanto con el botón como con Ctrl+P. El botón del panel permanece deshabilitado si no hay rutina vigente. La tabla aprovecha todo el ancho imprimible, repite su encabezado al continuar y procura no cortar un ejercicio entre páginas. Las rutinas largas pueden necesitar varias hojas; no se reduce todo a un tamaño ilegible para forzar una sola página. Los encabezados y pies añadidos por el navegador se desactivan desde su diálogo de impresión, si se desea.
 
 Verificación: compilación de Vite/TypeScript aprobada. Se preparó una prueba con datos ficticios sin Atlas, pero la herramienta de control de Firefox en Windows detuvo la comprobación por falta de compatibilidad con su política de URLs. No se verificó la paginación real en la vista previa. Pendiente: comprobar impresión en usuario y personal con una rutina corta y otra larga, usando el mismo tamaño de papel y escala. No se realizaron escrituras de prueba en Atlas.
+
+### 40. Unificación de Turnos y organización del código (26/10/2026)
+
+ADMIN y ENTRENADOR usan la misma página, estilos y generador de agenda semanal. El entrenador ve las franjas de apertura y el cupo general como referencia de solo lectura, elige sus días y genera su propia agenda. ADMIN configura los valores generales, selecciona varios entrenadores y conserva las operaciones masivas. El listado se agrupa por entrenador y día con el mismo diseño en ambos roles.
+
+Se retiró el segundo formulario de creación individual. El formulario individual ahora es únicamente un editor y aparece al pulsar Editar en un turno existente. No envía un alta si falta el identificador del turno. El servidor verifica que un ENTRENADOR solo consulte y modifique sus propios turnos, incluso al cambiar identificadores manualmente.
+
+La antigua carpeta src/compartidos se reemplazó por:
+
+- src/servicios: peticiones a la API y control de sesión.
+- src/componentes: tablas, formularios y utilidades de interfaz, diálogos, presentación de rutinas y su impresión.
+- src/tipos/entidades.ts: interfaces TypeScript de las entidades.
+
+Todos los imports se adaptaron a estas rutas. Las páginas y sus URLs públicas se mantienen. La separación de cada módulo en HTML, CSS y TypeScript se conserva. Los README exteriores a frontend/backend y los documentos de diseño no fueron editados.
+
+Verificación: comprobación de tipos y compilación de ambas partes; 39 pruebas de backend. En navegador con datos ficticios: ADMIN genera ocho horarios con cupo 25, ENTRENADOR ve el mismo formulario y genera ocho horarios adicionales para su segundo día, conservando las asignaciones existentes. También se comprobó la edición de un turno propio y que el editor se oculte al guardar. No se escribieron datos de prueba en Atlas.

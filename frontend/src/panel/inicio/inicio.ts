@@ -1,6 +1,7 @@
 import { prepararPanel } from '../estructura.ts';
-import { api, elemento, nodo, tabla, enlace, avisar, dinero, fecha, nombreCompleto } from '../../compartidos/api.ts';
-import type { Pago, Ficha, Turno, ClienteListado } from '../../compartidos/modelos.ts';
+import { api } from '../../servicios/api.ts';
+import { elemento, nodo, tabla, enlace, avisar, dinero, fecha, nombreCompleto } from '../../componentes/interfaz.ts';
+import type { Pago, Ficha, Turno, ClienteListado } from '../../tipos/entidades.ts';
 interface Resumen {
     pendientes: unknown[];
     activos: number;

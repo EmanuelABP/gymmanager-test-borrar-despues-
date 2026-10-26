@@ -1,4 +1,4 @@
-import { obtenerSesion, redirigirSegunRol } from '../compartidos/sesion.ts'
+import { obtenerSesion, redirigirSegunRol } from '../servicios/sesion.ts'
 
 // Ocultamos el formulario hasta comprobar si corresponde abrir una sesión nueva.
 export async function comprobarEntradaPublica(): Promise<void> {

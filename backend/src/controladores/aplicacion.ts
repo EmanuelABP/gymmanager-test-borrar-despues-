@@ -251,12 +251,14 @@ export function crearGestorAplicacion(dependencias = {
             }
             if (ruta.startsWith('/api/turnos')) {
                 if (metodo === 'GET' && ruta === '/api/turnos') {
-                    responder(res, 200, { turnos: await consultarTurnos(db) });
+                    responder(res, 200, { turnos: await consultarTurnos(db, usuario.rol === 'ENTRENADOR' ? { entrenadorId: new ObjectId(usuario.id) } : {}) });
                     return;
                 }
                 if (metodo === 'GET' && ruta === '/api/turnos/configuracion') {
-                    exigirRol(usuario, ['ADMIN']);
-                    responder(res, 200, { configuracion: await consultarAgenda(db) });
+                    const configuracion = await consultarAgenda(db);
+                    responder(res, 200, { configuracion: { ...configuracion,
+                        trabajos: usuario.rol === 'ENTRENADOR' ? configuracion.trabajos.filter(t => t.entrenadorId.toHexString() === usuario.id) : configuracion.trabajos,
+                    } });
                     return;
                 }
                 if (metodo !== 'POST')
